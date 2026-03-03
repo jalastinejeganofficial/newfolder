@@ -163,6 +163,9 @@ const VoiceInput = {
         updateCharCount();
       }
       
+      // CRITICAL: Check for audit keywords in transcript (same as text input)
+      this.checkForAuditKeywords(transcript);
+      
       // Show success message
       if (typeof showToast === 'function') {
         showToast('Voice input added!', '🎤');
@@ -172,12 +175,52 @@ const VoiceInput = {
       if (transcript.trim().length >= 50) {
         setTimeout(() => {
           if (confirm('Analyze spoken text now?')) {
-            if (typeof analyzeContent === 'function') {
+            // Call global analyzeContent function
+            if (window.analyzeContent) {
+              window.analyzeContent();
+            } else if (typeof analyzeContent === 'function') {
               analyzeContent();
             }
           }
         }, 500);
       }
+    }
+  },
+  
+  // Check for audit keywords in voice transcript
+  checkForAuditKeywords(transcript) {
+    try {
+      // Get ScreenLock instance if available
+      if (typeof ScreenLock === 'undefined' || ScreenLock.isLocked) {
+        return; // Don't check if already locked
+      }
+      
+      // Convert to lowercase for matching
+      const transcriptLower = transcript.toLowerCase();
+      
+      // Use ScreenLock's keyword checking
+      const foundKeywords = ScreenLock.AUDIT_KEYWORDS.filter(keyword => 
+        transcriptLower.includes(keyword.toLowerCase())
+      );
+      
+      if (foundKeywords.length > 0) {
+        console.log('🔒 Audit keywords detected in VOICE:', foundKeywords);
+        
+        // Trigger screen lock with same escalating logic
+        ScreenLock.incrementOffenseAndLock(foundKeywords);
+        
+        // Log security event
+        if (typeof Logger !== 'undefined') {
+          Logger.analytics('voice_audit_detection', {
+            action: 'audit_keywords_in_voice',
+            keywords: foundKeywords,
+            timestamp: new Date().toISOString(),
+            offenseCount: ScreenLock.offenseCount
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error checking voice for audit keywords:', error);
     }
   },
   
@@ -242,10 +285,10 @@ const VoiceInput = {
   }
 };
 
-// Global toggle function
-function toggleVoiceInput() {
+// Global toggle function - ensure it's accessible
+window.toggleVoiceInput = function() {
   VoiceInput.toggle();
-}
+};
 
 // Initialize on page load
 if (typeof document !== 'undefined') {

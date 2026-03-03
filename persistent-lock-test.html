@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Persistent Lock Test - VeritasAI</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .container {
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      max-width: 900px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    h1 { color: #333; margin-bottom: 10px; }
+    .subtitle { color: #666; margin-bottom: 30px; }
+    
+    .test-section {
+      background: #f0f4ff;
+      border-left: 4px solid #667eea;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 25px;
+    }
+    .test-section h3 { color: #667eea; margin-bottom: 10px; }
+    .test-section p { color: #555; line-height: 1.6; }
+    
+    .status-panel {
+      background: #f8f9fa;
+      border: 2px solid #e9ecef;
+      border-radius: 10px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+    .status-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid #dee2e6;
+    }
+    .status-item:last-child { border-bottom: none; }
+    .status-label { font-weight: 600; color: #555; }
+    .status-value { color: #333; font-weight: 600; }
+    .status-value.active { color: #ef4444; }
+    .status-value.warning { color: #f59e0b; }
+    .status-value.success { color: #22c55e; }
+    
+    textarea {
+      width: 100%;
+      min-height: 100px;
+      padding: 15px;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      font-size: 1rem;
+      resize: vertical;
+      margin: 15px 0;
+    }
+    textarea:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    button {
+      padding: 12px 24px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      margin: 5px;
+      transition: all 0.3s;
+    }
+    button:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4); }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    
+    .warning-box {
+      background: #fef3c7;
+      border: 2px solid #fbbf24;
+      border-radius: 10px;
+      padding: 15px;
+      margin: 20px 0;
+    }
+    .warning-box strong { color: #92400e; }
+    
+    .code-block {
+      background: #1e293b;
+      color: #e2e8f0;
+      padding: 15px;
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9rem;
+      margin: 10px 0;
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔐 Persistent Lock Test Page</h1>
+    <p class="subtitle">Test the anti-bypass refresh-resistant lock system</p>
+    
+    <div class="test-section">
+      <h3>🎯 What This Tests</h3>
+      <p>This demonstrates that the lock screen <strong>cannot be bypassed by refreshing the page</strong>. 
+         Once triggered, the lock persists in browser storage and will restore even after page reload, 
+         browser close, or computer restart. The only way out is to wait for the timer!</p>
+    </div>
+    
+    <div class="status-panel">
+      <div class="status-item">
+        <span class="status-label">Current Status:</span>
+        <span class="status-value" id="lockStatus">✅ Active</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">Persistent Lock Active:</span>
+        <span class="status-value" id="persistentStatus">Checking...</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">Offense Count:</span>
+        <span class="status-value" id="offenseCount">0</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">Remaining Time:</span>
+        <span class="status-value" id="remainingTime">None</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">localStorage Key:</span>
+        <span class="status-value" id="storageKey">veritasai_lock_state</span>
+      </div>
+    </div>
+    
+    <div class="test-section">
+      <h3>🧪 Test Instructions</h3>
+      <p><strong>Step 1:</strong> Type "audit" in the text area below</p>
+      <p><strong>Step 2:</strong> Lock screen appears with countdown</p>
+      <p><strong>Step 3:</strong> Press F5 or Ctrl+R to refresh the page</p>
+      <p><strong>Step 4:</strong> Watch the lock screen reappear automatically!</p>
+      <p><strong>Step 5:</strong> Try closing browser and reopening - lock still there!</p>
+    </div>
+    
+    <textarea id="testInput" placeholder="Type here to trigger lock... Try typing 'audit'"></textarea>
+    
+    <div style="margin: 20px 0;">
+      <button onclick="checkLockStatus()">🔄 Check Status</button>
+      <button onclick="viewLockData()">📊 View localStorage</button>
+      <button onclick="clearLockManually()" style="background: linear-gradient(135deg, #ef4444, #dc2626);">⚠️ Emergency Clear (Testing)</button>
+    </div>
+    
+    <div class="warning-box">
+      <strong>⚠️ Important:</strong> Once you trigger the lock, refreshing the page won't help! 
+      The lock state is saved in your browser's localStorage and will restore automatically. 
+      You must wait for the countdown to complete. For testing purposes, use the "Emergency Clear" 
+      button above to manually remove the lock.
+    </div>
+    
+    <div class="test-section">
+      <h3>📊 Expected Behavior</h3>
+      <ul style="margin-left: 20px; color: #555; line-height: 1.8;">
+        <li>Type "audit" → 1-minute lock starts</li>
+        <li>Refresh page → Lock restores within 500ms</li>
+        <li>Close browser → Lock persists</li>
+        <li>Reopen browser → Lock still active</li>
+        <li>Wait 60 seconds → Auto-unlock</li>
+        <li>After unlock → Refresh = no lock (cleared)</li>
+      </ul>
+    </div>
+    
+    <div id="consoleOutput" class="code-block" style="display: none;"></div>
+  </div>
+  
+  <script>
+    // Simplified Persistent Lock Implementation
+    const PersistentLock = {
+      AUDIT_KEYWORDS: ['audit', 'auditing', 'audited', 'compliance', 'inspection'],
+      
+      LOCK_TIMES: {
+        FIRST_OFFENSE: 15000,    // 15 seconds (for quick testing)
+        SECOND_OFFENSE: 30000,   // 30 seconds
+        THIRD_OFFENSE: 60000     // 1 minute
+      },
+      
+      isLocked: false,
+      offenseCount: 0,
+      lastLockTime: null,
+      currentLockDuration: 15000,
+      unlockTime: null,
+      lockTimer: null,
+      
+      init() {
+        const input = document.getElementById('testInput');
+        input.addEventListener('input', (e) => {
+          if (!this.isLocked) {
+            this.checkForAuditKeywords(e.target.value.toLowerCase());
+          }
+        });
+        
+        this.checkPersistentLock();
+        this.updateStatus();
+        console.log('Persistent Lock initialized');
+      },
+      
+      checkPersistentLock() {
+        try {
+          const lockData = localStorage.getItem('veritasai_lock_state');
+          
+          if (lockData) {
+            const parsed = JSON.parse(lockData);
+            const now = Date.now();
+            
+            if (parsed.unlockTime && now < parsed.unlockTime) {
+              console.log('✅ Persistent lock detected! Remaining time:', 
+                Math.round((parsed.unlockTime - now) / 1000), 'seconds');
+              
+              this.isLocked = true;
+              this.unlockTime = parsed.unlockTime;
+              this.offenseCount = parsed.offenseCount || 1;
+              this.currentLockDuration = parsed.duration || 15000;
+              this.lastLockTime = parsed.lastLockTime || now;
+              
+              setTimeout(() => {
+                this.createLockOverlay();
+                this.startCountdown();
+                this.enableMaximumSecurity();
+              }, 500);
+              
+              this.updateStatus();
+            } else if (parsed.unlockTime && now >= parsed.unlockTime) {
+              console.log('✅ Lock expired, clearing state');
+              localStorage.removeItem('veritasai_lock_state');
+              this.offenseCount = 0;
+              this.updateStatus();
+            }
+          }
+        } catch (error) {
+          console.error('Error checking persistent lock:', error);
+        }
+      },
+      
+      saveLockState() {
+        try {
+          const lockState = {
+            isLocked: this.isLocked,
+            unlockTime: this.unlockTime,
+            offenseCount: this.offenseCount,
+            duration: this.currentLockDuration,
+            lastLockTime: this.lastLockTime,
+            timestamp: Date.now()
+          };
+          
+          localStorage.setItem('veritasai_lock_state', JSON.stringify(lockState));
+          console.log('💾 Lock state saved to localStorage');
+          this.updateStatus();
+        } catch (error) {
+          console.error('Failed to save lock state:', error);
+        }
+      },
+      
+      clearLockState() {
+        try {
+          localStorage.removeItem('veritasai_lock_state');
+          console.log('🗑️ Lock state cleared from localStorage');
+          this.updateStatus();
+        } catch (error) {
+          console.error('Failed to clear lock state:', error);
+        }
+      },
+      
+      checkForAuditKeywords(text) {
+        const foundKeywords = this.AUDIT_KEYWORDS.filter(keyword => 
+          text.includes(keyword.toLowerCase())
+        );
+        
+        if (foundKeywords.length > 0) {
+          console.log('🔍 Audit keywords detected:', foundKeywords);
+          this.incrementOffenseAndLock(foundKeywords);
+        }
+      },
+      
+      incrementOffenseAndLock(keywords) {
+        const now = Date.now();
+        
+        if (this.lastLockTime && (now - this.lastLockTime) > 3600000) {
+          this.offenseCount = 0;
+          console.log('🔄 Offense count reset (> 1 hour elapsed)');
+        }
+        
+        this.offenseCount++;
+        this.lastLockTime = now;
+        
+        if (this.offenseCount === 1) {
+          this.currentLockDuration = this.LOCK_TIMES.FIRST_OFFENSE;
+        } else if (this.offenseCount === 2) {
+          this.currentLockDuration = this.LOCK_TIMES.SECOND_OFFENSE;
+        } else {
+          this.currentLockDuration = this.LOCK_TIMES.THIRD_OFFENSE;
+        }
+        
+        console.log(`📊 Offense #${this.offenseCount} - Duration: ${this.currentLockDuration/1000}s`);
+        this.triggerLock(keywords);
+      },
+      
+      triggerLock(keywords) {
+        this.isLocked = true;
+        this.unlockTime = Date.now() + this.currentLockDuration;
+        
+        console.log(`🔒 LOCK TRIGGERED for ${this.currentLockDuration/1000} seconds`);
+        
+        // CRITICAL: Save to localStorage (persists through refresh)
+        this.saveLockState();
+        
+        this.createLockOverlay();
+        this.startCountdown();
+        this.enableMaximumSecurity();
+        this.updateStatus();
+      },
+      
+      createLockOverlay() {
+        const existing = document.getElementById('persistent-lock-overlay');
+        if (existing) existing.remove();
+        
+        const overlay = document.createElement('div');
+        overlay.id = 'persistent-lock-overlay';
+        overlay.style.cssText = `
+          position: fixed;
+          top: 0; left: 0;
+          width: 100%; height: 100%;
+          background: linear-gradient(135deg, rgba(2, 2, 8, 0.98), rgba(6, 6, 18, 0.98));
+          backdrop-filter: blur(20px);
+          z-index: 999999;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        `;
+        
+        const durationSeconds = Math.round(this.currentLockDuration / 1000);
+        
+        overlay.innerHTML = `
+          <div style="
+            max-width: 600px;
+            width: 90%;
+            background: rgba(10, 12, 40, 0.95);
+            border: 2px solid rgba(239, 68, 68, 0.5);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 0 60px rgba(239, 68, 68, 0.4);
+            animation: lockAppear 0.5s ease;
+          ">
+            <div style="font-size: 5rem; text-align: center; margin-bottom: 20px;">🔒</div>
+            <h2 style="color: #ef4444; text-align: center; margin-bottom: 24px; text-transform: uppercase;">
+              Screen Locked - Refresh Proof
+            </h2>
+            
+            <div style="
+              background: rgba(239, 68, 68, 0.1);
+              border-left: 4px solid #ef4444;
+              border-radius: 12px;
+              padding: 20px;
+              margin-bottom: 30px;
+            ">
+              <p style="color: #e8f0ff; margin: 0 0 12px 0;"><strong>Persistent Lock Activated!</strong></p>
+              <p style="color: #e8f0ff; font-size: 0.875rem; line-height: 1.6;">
+                This lock cannot be bypassed by refreshing the page. It will persist across page reloads, 
+                browser closes, and even computer restarts until the timer expires.
+              </p>
+            </div>
+            
+            <div style="text-align: center; margin-bottom: 30px; padding: 30px; background: rgba(0,0,0,0.4); border-radius: 16px;">
+              <div style="color: #6a80b0; font-size: 0.9rem; margin-bottom: 12px; text-transform: uppercase;">Unlocking in:</div>
+              <div id="lock-countdown" style="
+                font-size: 5rem;
+                color: #ef4444;
+                font-weight: 900;
+                text-shadow: 0 0 30px rgba(239, 68, 68, 0.8);
+              ">${durationSeconds}</div>
+              <div style="color: #6a80b0; font-size: 0.875rem;">seconds</div>
+            </div>
+            
+            <div style="
+              background: rgba(59, 130, 246, 0.1);
+              border: 1px solid rgba(59, 130, 246, 0.3);
+              border-radius: 12px;
+              padding: 16px;
+              margin-bottom: 24px;
+            ">
+              <p style="color: #e8f0ff; font-size: 0.875rem; line-height: 1.6; margin: 0;">
+                ℹ️ <strong>Note:</strong> Try refreshing the page (F5 or Ctrl+R) - the lock will restore automatically! 
+                The only way to unlock is to wait for the countdown to reach zero.
+              </p>
+            </div>
+          </div>
+        `;
+        
+        document.body.appendChild(overlay);
+        document.body.style.overflow = 'hidden';
+      },
+      
+      startCountdown() {
+        const countdownEl = document.getElementById('lock-countdown');
+        
+        this.lockTimer = setInterval(() => {
+          const remaining = Math.max(0, Math.floor((this.unlockTime - Date.now()) / 1000));
+          
+          if (countdownEl) {
+            countdownEl.textContent = remaining;
+          }
+          
+          if (remaining <= 0) {
+            clearInterval(this.lockTimer);
+            this.unlock();
+          }
+          
+          this.updateStatus();
+        }, 1000);
+      },
+      
+      unlock() {
+        this.isLocked = false;
+        this.unlockTime = null;
+        
+        // Clear persistent state
+        this.clearLockState();
+        
+        const overlay = document.getElementById('persistent-lock-overlay');
+        if (overlay) overlay.remove();
+        
+        document.body.style.overflow = '';
+        this.disableMaximumSecurity();
+        
+        alert('✅ Lock expired! You can now access the page.\n\nTry triggering it again to test persistence!');
+        this.updateStatus();
+      },
+      
+      enableMaximumSecurity() {
+        document.addEventListener('contextmenu', e => { e.preventDefault(); return false; }, true);
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && ['I', 'J'].includes(e.key))) {
+            e.preventDefault();
+            return false;
+          }
+        }, true);
+        document.body.style.userSelect = 'none';
+      },
+      
+      disableMaximumSecurity() {
+        document.body.style.userSelect = '';
+      },
+      
+      updateStatus() {
+        const statusEl = document.getElementById('lockStatus');
+        const persistentEl = document.getElementById('persistentStatus');
+        const offenseEl = document.getElementById('offenseCount');
+        const remainingEl = document.getElementById('remainingTime');
+        
+        if (this.isLocked && this.unlockTime) {
+          const remaining = Math.max(0, Math.floor((this.unlockTime - Date.now()) / 1000));
+          statusEl.textContent = '🔒 LOCKED';
+          statusEl.className = 'status-value active';
+          persistentEl.textContent = '✅ Yes (Refresh-proof)';
+          persistentEl.className = 'status-value success';
+          offenseEl.textContent = this.offenseCount;
+          remainingEl.textContent = remaining > 0 ? `${remaining} seconds` : 'Expired';
+        } else {
+          statusEl.textContent = '✅ Active';
+          statusEl.className = 'status-value';
+          persistentEl.textContent = '❌ No active lock';
+          persistentEl.className = 'status-value';
+          offenseEl.textContent = this.offenseCount;
+          remainingEl.textContent = 'None';
+        }
+      }
+    };
+    
+    // Global functions for buttons
+    window.checkLockStatus = function() {
+      PersistentLock.updateStatus();
+      console.log('Status checked manually');
+    };
+    
+    window.viewLockData = function() {
+      const data = localStorage.getItem('veritasai_lock_state');
+      const output = document.getElementById('consoleOutput');
+      if (data) {
+        const parsed = JSON.parse(data);
+        output.innerHTML = `<pre>${JSON.stringify(parsed, null, 2)}</pre>`;
+        output.style.display = 'block';
+        console.log('Lock data:', parsed);
+      } else {
+        output.innerHTML = '<div>No active lock state found in localStorage</div>';
+        output.style.display = 'block';
+      }
+    };
+    
+    window.clearLockManually = function() {
+      if (confirm('⚠️ This will manually clear the lock state.\n\nOnly use this for testing purposes!\n\nContinue?')) {
+        localStorage.removeItem('veritasai_lock_state');
+        location.reload();
+      }
+    };
+    
+    // Initialize on load
+    window.addEventListener('DOMContentLoaded', () => {
+      PersistentLock.init();
+      
+      // Auto-check every 5 seconds
+      setInterval(() => {
+        PersistentLock.updateStatus();
+      }, 5000);
+    });
+  </script>
+</body>
+</html>

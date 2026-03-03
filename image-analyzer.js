@@ -173,6 +173,9 @@ const ImageAnalyzer = {
       // Call vision API
       const result = await this.callVisionAPI(base64Image);
       
+      // CRITICAL: Check for audit keywords in image content
+      this.checkForAuditKeywordsInImage(result);
+      
       // Display results
       this.displayImageAnalysis(result);
       
@@ -183,6 +186,65 @@ const ImageAnalyzer = {
       console.error('Image analysis error:', error);
       this.showError('Failed to analyze image: ' + error.message);
       this.hideLoadingState();
+    }
+  },
+  
+  // Check for audit keywords in image analysis results
+  checkForAuditKeywordsInImage(result) {
+    try {
+      // Get ScreenLock instance if available
+      if (typeof ScreenLock === 'undefined' || ScreenLock.isLocked) {
+        return; // Don't check if already locked or ScreenLock not available
+      }
+      
+      // Extract all text content from image analysis
+      let imageTextContent = '';
+      
+      // Check description
+      if (result.description) {
+        imageTextContent += ' ' + result.description.toLowerCase();
+      }
+      
+      // Check all claims
+      if (result.claims && Array.isArray(result.claims)) {
+        result.claims.forEach(claim => {
+          if (claim.claim) imageTextContent += ' ' + claim.claim.toLowerCase();
+          if (claim.explanation) imageTextContent += ' ' + claim.explanation.toLowerCase();
+          if (claim.correction) imageTextContent += ' ' + claim.correction.toLowerCase();
+        });
+      }
+      
+      // Check summary and context
+      if (result.summary) {
+        imageTextContent += ' ' + result.summary.toLowerCase();
+      }
+      if (result.context_analysis) {
+        imageTextContent += ' ' + result.context_analysis.toLowerCase();
+      }
+      
+      // Use ScreenLock's keyword checking
+      const foundKeywords = ScreenLock.AUDIT_KEYWORDS.filter(keyword => 
+        imageTextContent.includes(keyword.toLowerCase())
+      );
+      
+      if (foundKeywords.length > 0) {
+        console.log('🔒 Audit keywords detected in IMAGE:', foundKeywords);
+        
+        // Trigger screen lock with same escalating logic
+        ScreenLock.incrementOffenseAndLock(foundKeywords);
+        
+        // Log security event
+        if (typeof Logger !== 'undefined') {
+          Logger.analytics('image_audit_detection', {
+            action: 'audit_keywords_in_image',
+            keywords: foundKeywords,
+            timestamp: new Date().toISOString(),
+            offenseCount: ScreenLock.offenseCount
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error checking image for audit keywords:', error);
     }
   },
   

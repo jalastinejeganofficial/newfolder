@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Audit Words Lock - Test Page</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    
+    .container {
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      max-width: 800px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 2rem;
+    }
+    
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 1rem;
+    }
+    
+    .info-box {
+      background: #f0f4ff;
+      border-left: 4px solid #667eea;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 30px;
+    }
+    
+    .info-box h3 {
+      color: #667eea;
+      margin-bottom: 10px;
+    }
+    
+    .info-box ul {
+      margin-left: 20px;
+      color: #555;
+    }
+    
+    .info-box li {
+      margin-bottom: 8px;
+    }
+    
+    .test-area {
+      margin-bottom: 30px;
+    }
+    
+    label {
+      display: block;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 1.1rem;
+    }
+    
+    textarea {
+      width: 100%;
+      min-height: 150px;
+      padding: 15px;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-family: inherit;
+      resize: vertical;
+      transition: all 0.3s;
+    }
+    
+    textarea:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    .status-box {
+      background: #f8f9fa;
+      border: 2px solid #e9ecef;
+      border-radius: 10px;
+      padding: 20px;
+      margin-top: 20px;
+    }
+    
+    .status-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid #dee2e6;
+    }
+    
+    .status-item:last-child {
+      border-bottom: none;
+    }
+    
+    .status-label {
+      font-weight: 600;
+      color: #555;
+    }
+    
+    .status-value {
+      color: #333;
+      font-weight: 600;
+    }
+    
+    .status-value.active {
+      color: #ef4444;
+    }
+    
+    .status-value.warning {
+      color: #f59e0b;
+    }
+    
+    .keyword-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 15px;
+    }
+    
+    .keyword-tag {
+      background: linear-gradient(135deg, #fee2e2, #fecaca);
+      border: 1px solid #fca5a5;
+      color: #dc2626;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      font-family: monospace;
+    }
+    
+    .instructions {
+      background: #fef3c7;
+      border: 2px solid #fbbf24;
+      border-radius: 10px;
+      padding: 20px;
+      margin-top: 20px;
+    }
+    
+    .instructions h3 {
+      color: #92400e;
+      margin-bottom: 10px;
+    }
+    
+    .instructions ol {
+      margin-left: 20px;
+      color: #78350f;
+    }
+    
+    .instructions li {
+      margin-bottom: 8px;
+    }
+    
+    /* Lock Overlay Styles */
+    .screen-lock-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, rgba(2, 2, 8, 0.98), rgba(6, 6, 18, 0.98));
+      backdrop-filter: blur(20px);
+      z-index: 999999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .lock-container {
+      max-width: 600px;
+      width: 90%;
+      background: rgba(10, 12, 40, 0.95);
+      border: 2px solid rgba(239, 68, 68, 0.5);
+      border-radius: 24px;
+      padding: 40px;
+      box-shadow: 0 0 60px rgba(239, 68, 68, 0.4),
+                  inset 0 0 40px rgba(239, 68, 68, 0.1);
+      animation: lock-appear 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+      position: relative;
+    }
+    
+    @keyframes lock-appear {
+      0% {
+        opacity: 0;
+        transform: scale(0.8) translateY(-50px);
+      }
+      100% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
+    
+    .lock-icon {
+      font-size: 5rem;
+      text-align: center;
+      margin-bottom: 20px;
+      animation: pulse-lock 2s infinite;
+    }
+    
+    @keyframes pulse-lock {
+      0%, 100% {
+        transform: scale(1);
+        filter: drop-shadow(0 0 20px rgba(239, 68, 68, 0.6));
+      }
+      50% {
+        transform: scale(1.1);
+        filter: drop-shadow(0 0 40px rgba(239, 68, 68, 0.9));
+      }
+    }
+    
+    .lock-title {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: #ef4444;
+      text-align: center;
+      margin-bottom: 24px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      text-shadow: 0 0 20px rgba(239, 68, 68, 0.6);
+    }
+    
+    .lock-message {
+      background: rgba(239, 68, 68, 0.1);
+      border-left: 4px solid #ef4444;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 30px;
+    }
+    
+    .lock-message p {
+      margin: 0 0 12px 0;
+      color: var(--text-primary);
+      font-size: 1rem;
+    }
+    
+    .detected-keywords {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    
+    .offense-indicator {
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(245, 158, 11, 0.15));
+      border: 2px solid rgba(239, 68, 68, 0.4);
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-bottom: 24px;
+      text-align: center;
+    }
+    
+    .offense-level {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #ef4444;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+    }
+    
+    .offense-warning {
+      font-size: 0.95rem;
+      color: #f59e0b;
+      font-weight: 600;
+      text-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
+    }
+    
+    .lock-timer-section {
+      text-align: center;
+      margin-bottom: 30px;
+      padding: 30px;
+      background: rgba(0, 0, 0, 0.4);
+      border-radius: 16px;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+    
+    .timer-label {
+      font-size: 0.9rem;
+      color: #6a80b0;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    .countdown-timer {
+      font-size: 5rem;
+      font-weight: 900;
+      color: #ef4444;
+      font-family: 'JetBrains Mono', monospace;
+      text-shadow: 0 0 30px rgba(239, 68, 68, 0.8);
+      animation: countdown-pulse 1s infinite;
+    }
+    
+    @keyframes countdown-pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+    
+    .timer-unit {
+      font-size: 0.875rem;
+      color: #6a80b0;
+      margin-top: 8px;
+      text-transform: lowercase;
+    }
+    
+    .lock-progress-bar-wrap {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 6px;
+      background: rgba(0, 0, 0, 0.5);
+      border-radius: 0 0 24px 24px;
+      overflow: hidden;
+    }
+    
+    .lock-progress-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, #ef4444, #f59e0b, #ef4444);
+      background-size: 200% 100%;
+      transition: width 1s linear;
+      animation: progress-glow 2s infinite, gradient-shift 3s ease infinite;
+      box-shadow: 0 0 20px rgba(239, 68, 68, 0.8);
+    }
+    
+    @keyframes progress-glow {
+      0%, 100% {
+        box-shadow: 0 0 10px rgba(239, 68, 68, 0.8);
+      }
+      50% {
+        box-shadow: 0 0 30px rgba(239, 68, 68, 1), 0 0 50px rgba(245, 158, 11, 0.6);
+      }
+    }
+    
+    @keyframes gradient-shift {
+      0% {
+        background-position: 0% 50%;
+      }
+      50% {
+        background-position: 100% 50%;
+      }
+      100% {
+        background-position: 0% 50%;
+      }
+    }
+    
+    .lock-info {
+      margin-bottom: 24px;
+    }
+    
+    .info-box {
+      display: flex;
+      gap: 16px;
+      background: rgba(59, 130, 246, 0.1);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      border-radius: 12px;
+      padding: 16px;
+    }
+    
+    .info-icon {
+      font-size: 1.5rem;
+      flex-shrink: 0;
+    }
+    
+    .info-text {
+      flex: 1;
+    }
+    
+    .info-text p {
+      margin: 0 0 8px 0;
+      color: #e8f0ff;
+      font-size: 0.875rem;
+      line-height: 1.6;
+    }
+    
+    .lock-footer {
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      padding-top: 20px;
+      margin-top: 20px;
+    }
+    
+    .security-notice {
+      text-align: center;
+      font-size: 0.75rem;
+      color: #6a80b0;
+      opacity: 0.7;
+      font-family: monospace;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔒 Audit Words Lock Test</h1>
+    <p class="subtitle">Test the escalating screen lock security feature</p>
+    
+    <div class="info-box">
+      <h3>How It Works</h3>
+      <ul>
+        <li>Type any audit-related keyword in the text area below</li>
+        <li>The system will detect it and lock the screen</li>
+        <li>Lock duration escalates: 1 min → 5 min → 1 day</li>
+        <li>During lock: No inspect element, no dev tools, no right-click</li>
+      </ul>
+    </div>
+    
+    <div class="test-area">
+      <label for="testInput">Try typing these keywords:</label>
+      <textarea id="testInput" placeholder="Type here to test... Try words like: audit, compliance, inspection, verification, etc."></textarea>
+      
+      <div class="status-box">
+        <div class="status-item">
+          <span class="status-label">Current Status:</span>
+          <span class="status-value" id="statusValue">Active</span>
+        </div>
+        <div class="status-item">
+          <span class="status-label">Offense Count:</span>
+          <span class="status-value" id="offenseCount">0</span>
+        </div>
+        <div class="status-item">
+          <span class="status-label">Last Lock:</span>
+          <span class="status-value" id="lastLock">Never</span>
+        </div>
+        <div class="status-item">
+          <span class="status-label">Next Lock Duration:</span>
+          <span class="status-value warning" id="nextDuration">1 minute</span>
+        </div>
+      </div>
+      
+      <div class="keyword-list" id="keywordList"></div>
+    </div>
+    
+    <div class="instructions">
+      <h3>📋 Test Instructions</h3>
+      <ol>
+        <li><strong>First Test:</strong> Type "audit" - Screen locks for 1 minute</li>
+        <li><strong>Second Test:</strong> After unlock, type "compliance" - Locks for 5 minutes</li>
+        <li><strong>Third Test:</strong> Type "inspection" - Locks for 24 hours</li>
+        <li><strong>Try during lock:</strong> F12, right-click, Ctrl+Shift+I (all blocked)</li>
+        <li><strong>Reset:</strong> Wait 1 hour or refresh page to reset offense count</li>
+      </ol>
+    </div>
+  </div>
+  
+  <script>
+    // Simplified Screen Lock Implementation
+    const AuditLock = {
+      AUDIT_KEYWORDS: [
+        'audit', 'auditing', 'audited', 'auditor', 'auditors',
+        'compliance', 'compliance audit', 'regulatory audit',
+        'internal audit', 'external audit', 'financial audit',
+        'security audit', 'inspection', 'investigation',
+        'verification', 'validation', 'examination',
+        'review process', 'accountability', 'transparency',
+        'governance', 'oversight', 'scrutiny', 'assessment',
+        'due diligence', 'forensic audit', 'tax audit',
+        'operational audit', 'performance audit'
+      ],
+      
+      LOCK_TIMES: {
+        FIRST_OFFENSE: 10000,    // 10 seconds (for testing)
+        SECOND_OFFENSE: 30000,   // 30 seconds
+        THIRD_OFFENSE: 60000     // 1 minute
+      },
+      
+      isLocked: false,
+      offenseCount: 0,
+      lastLockTime: null,
+      currentLockDuration: 10000,
+      
+      init() {
+        const input = document.getElementById('testInput');
+        input.addEventListener('input', (e) => {
+          if (!this.isLocked) {
+            this.checkForAuditKeywords(e.target.value.toLowerCase());
+          }
+        });
+        console.log('Audit Lock initialized');
+      },
+      
+      checkForAuditKeywords(text) {
+        const foundKeywords = this.AUDIT_KEYWORDS.filter(keyword => 
+          text.includes(keyword.toLowerCase())
+        );
+        
+        if (foundKeywords.length > 0) {
+          this.incrementOffenseAndLock(foundKeywords);
+        }
+      },
+      
+      incrementOffenseAndLock(keywords) {
+        const now = Date.now();
+        
+        // Reset if more than 1 hour
+        if (this.lastLockTime && (now - this.lastLockTime) > 3600000) {
+          this.offenseCount = 0;
+          console.log('Offense count reset');
+        }
+        
+        this.offenseCount++;
+        this.lastLockTime = now;
+        
+        // Determine duration
+        if (this.offenseCount === 1) {
+          this.currentLockDuration = this.LOCK_TIMES.FIRST_OFFENSE;
+        } else if (this.offenseCount === 2) {
+          this.currentLockDuration = this.LOCK_TIMES.SECOND_OFFENSE;
+        } else {
+          this.currentLockDuration = this.LOCK_TIMES.THIRD_OFFENSE;
+        }
+        
+        this.updateStatus();
+        this.triggerLock(keywords);
+      },
+      
+      triggerLock(keywords) {
+        this.isLocked = true;
+        const unlockTime = Date.now() + this.currentLockDuration;
+        
+        console.log(`LOCKED for ${this.currentLockDuration/1000} seconds`);
+        this.createLockOverlay(keywords, unlockTime);
+        this.startCountdown(unlockTime);
+        this.enableMaximumSecurity();
+      },
+      
+      createLockOverlay(keywords, unlockTime) {
+        const overlay = document.createElement('div');
+        overlay.id = 'screen-lock-overlay';
+        overlay.className = 'screen-lock-overlay';
+        
+        const durationSeconds = Math.round(this.currentLockDuration / 1000);
+        
+        overlay.innerHTML = `
+          <div class="lock-container">
+            <div class="lock-icon">🔒</div>
+            <h2 class="lock-title">Screen Locked - Audit Context Detected</h2>
+            
+            <div class="lock-message">
+              <p><strong>Audit-related content detected:</strong></p>
+              <div class="detected-keywords">
+                ${keywords.map(k => `<span class="keyword-tag">${k}</span>`).join('')}
+              </div>
+            </div>
+            
+            <div class="offense-indicator">
+              <div class="offense-level">Offense Level: ${this.offenseCount}</div>
+              <div class="offense-warning">
+                ${this.offenseCount === 1 ? '⚠️ First Warning' : ''}
+                ${this.offenseCount === 2 ? '⚠️⚠️ Second Warning - Extended Lock' : ''}
+                ${this.offenseCount >= 3 ? '🚨 Maximum Security Lock Activated' : ''}
+              </div>
+            </div>
+            
+            <div class="lock-timer-section">
+              <div class="timer-label">Unlocking in:</div>
+              <div class="countdown-timer" id="lock-countdown">${durationSeconds}</div>
+              <div class="timer-unit">seconds</div>
+            </div>
+            
+            <div class="lock-progress-bar-wrap">
+              <div class="lock-progress-bar"></div>
+            </div>
+            
+            <div class="lock-info">
+              <div class="info-box">
+                <div class="info-icon">ℹ️</div>
+                <div class="info-text">
+                  <p>This screen is temporarily locked due to detection of audit-related content.</p>
+                  <p>The screen will automatically unlock after the countdown completes.</p>
+                  <p style="margin-top: 12px; font-weight: 600; color: #ef4444;">⛔ Developer tools, inspect element, and keyboard shortcuts are disabled during lock.</p>
+                </div>
+              </div>
+            </div>
+            
+            <div class="lock-footer">
+              <div class="security-notice">
+                🔒 Maximum Security Mode Active | 
+                ⏱️ Auto-unlock: ${new Date(unlockTime).toLocaleTimeString()}
+              </div>
+            </div>
+          </div>
+        `;
+        
+        document.body.appendChild(overlay);
+        document.body.style.overflow = 'hidden';
+      },
+      
+      startCountdown(unlockTime) {
+        const countdownEl = document.getElementById('lock-countdown');
+        const progressBar = document.querySelector('.lock-progress-bar');
+        
+        const timer = setInterval(() => {
+          const remaining = Math.max(0, Math.floor((unlockTime - Date.now()) / 1000));
+          
+          if (countdownEl) {
+            countdownEl.textContent = remaining;
+          }
+          
+          if (progressBar) {
+            const percentage = (remaining / (this.currentLockDuration / 1000)) * 100;
+            progressBar.style.width = `${percentage}%`;
+          }
+          
+          if (remaining <= 0) {
+            clearInterval(timer);
+            this.unlock();
+          }
+        }, 1000);
+      },
+      
+      unlock() {
+        this.isLocked = false;
+        const overlay = document.getElementById('screen-lock-overlay');
+        if (overlay) overlay.remove();
+        
+        document.body.style.overflow = '';
+        this.disableMaximumSecurity();
+        
+        alert('Screen unlocked! You can continue using the application.');
+        this.updateStatus();
+      },
+      
+      enableMaximumSecurity() {
+        // Block right-click
+        document.addEventListener('contextmenu', this.preventContextMenu, true);
+        
+        // Block keyboard shortcuts
+        document.addEventListener('keydown', this.preventKeyboardShortcuts, true);
+        
+        // Disable text selection
+        document.body.style.userSelect = 'none';
+      },
+      
+      disableMaximumSecurity() {
+        document.removeEventListener('contextmenu', this.preventContextMenu, true);
+        document.removeEventListener('keydown', this.preventKeyboardShortcuts, true);
+        document.body.style.userSelect = '';
+      },
+      
+      preventContextMenu(e) {
+        e.preventDefault();
+        return false;
+      },
+      
+      preventKeyboardShortcuts(e) {
+        if (e.key === 'F12' || 
+            (e.ctrlKey && e.shiftKey && ['I', 'J', 'C'].includes(e.key)) ||
+            (e.ctrlKey && ['U', 'S'].includes(e.key))) {
+          e.preventDefault();
+          return false;
+        }
+      },
+      
+      updateStatus() {
+        const statusEl = document.getElementById('statusValue');
+        const offenseEl = document.getElementById('offenseCount');
+        const lastLockEl = document.getElementById('lastLock');
+        const nextDurationEl = document.getElementById('nextDuration');
+        
+        statusEl.textContent = this.isLocked ? '🔒 LOCKED' : 'Active';
+        statusEl.className = 'status-value' + (this.isLocked ? ' active' : '');
+        offenseEl.textContent = this.offenseCount;
+        
+        if (this.lastLockTime) {
+          lastLockEl.textContent = new Date(this.lastLockTime).toLocaleTimeString();
+        } else {
+          lastLockEl.textContent = 'Never';
+        }
+        
+        let nextDur = '1 minute';
+        if (this.offenseCount === 0) nextDur = '10 seconds (test)';
+        else if (this.offenseCount === 1) nextDur = '30 seconds (test)';
+        else if (this.offenseCount >= 2) nextDur = '1 minute (test)';
+        
+        nextDurationEl.textContent = nextDur;
+      }
+    };
+    
+    // Initialize on load
+    window.addEventListener('DOMContentLoaded', () => {
+      AuditLock.init();
+      AuditLock.updateStatus();
+    });
+  </script>
+</body>
+</html>

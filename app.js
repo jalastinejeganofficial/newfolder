@@ -63,6 +63,9 @@ document.addEventListener('DOMContentLoaded', () => {
   StorageManager.init();
   I18N.init();
   
+  // Initialize screen lock security feature
+  ScreenLock.init();
+  
   // Load saved language and set selector
   const savedLanguage = StorageManager.getLanguage();
   const selector = document.getElementById('languageSelector');
@@ -291,7 +294,8 @@ function initClearButton() {
 }
 
 // ===== ANALYZE CONTENT =====
-async function analyzeContent() {
+// Make globally accessible for voice input
+window.analyzeContent = async function() {
   const text = elements.inputText.value.trim();
   
   if (!text) {

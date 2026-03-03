@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Verdicts Guide - Neural Syndicates</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="animations.css" />
+  <style>
+    /* Verdicts Page Styles */
+    .verdicts-page {
+      min-height: 100vh;
+      padding: 100px 20px 60px;
+      background: linear-gradient(135deg, #020208 0%, #060612 100%);
+    }
+
+    .verdicts-container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .verdicts-header {
+      text-align: center;
+      margin-bottom: 60px;
+    }
+
+    .verdicts-title {
+      font-size: 3rem;
+      font-weight: 900;
+      background: linear-gradient(135deg, #a5b4fc, #0ea5e9, #34d399);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-size: 200% 200%;
+      animation: gradient-shift 3s ease infinite;
+      margin-bottom: 16px;
+    }
+
+    .verdicts-subtitle {
+      font-size: 1.2rem;
+      color: var(--text-muted);
+      max-width: 800px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    /* Main Verdict Cards */
+    .verdict-main-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 32px;
+      margin: 60px 0;
+    }
+
+    .verdict-main-card {
+      background: rgba(10, 12, 40, 0.6);
+      border-radius: 20px;
+      padding: 40px 32px;
+      text-align: center;
+      transition: all 0.3s;
+      border: 3px solid transparent;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .verdict-main-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 6px;
+    }
+
+    .verdict-main-card.true::before {
+      background: linear-gradient(90deg, #10b981, #34d399);
+    }
+
+    .verdict-main-card.misleading::before {
+      background: linear-gradient(90deg, #f59e0b, #fbbf24);
+    }
+
+    .verdict-main-card.false::before {
+      background: linear-gradient(90deg, #ef4444, #f87171);
+    }
+
+    .verdict-main-card.unverifiable::before {
+      background: linear-gradient(90deg, #818cf8, #a5b4fc);
+    }
+
+    .verdict-main-card:hover {
+      transform: translateY(-12px);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+    }
+
+    .verdict-main-card.true:hover {
+      border-color: #10b981;
+      box-shadow: 0 0 40px rgba(16, 185, 129, 0.3);
+    }
+
+    .verdict-main-card.misleading:hover {
+      border-color: #f59e0b;
+      box-shadow: 0 0 40px rgba(245, 158, 11, 0.3);
+    }
+
+    .verdict-main-card.false:hover {
+      border-color: #ef4444;
+      box-shadow: 0 0 40px rgba(239, 68, 68, 0.3);
+    }
+
+    .verdict-main-card.unverifiable:hover {
+      border-color: #818cf8;
+      box-shadow: 0 0 40px rgba(129, 140, 248, 0.3);
+    }
+
+    .verdict-icon-large {
+      width: 110px;
+      height: 110px;
+      margin: 0 auto 24px;
+      display: block;
+      object-fit: contain;
+      filter: drop-shadow(0 0 24px currentColor);
+      transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.3s ease;
+    }
+
+    .verdict-main-card:hover .verdict-icon-large {
+      transform: scale(1.12) translateY(-4px);
+    }
+
+    .verdict-name {
+      font-size: 1.8rem;
+      font-weight: 800;
+      margin-bottom: 16px;
+      color: var(--text-primary);
+    }
+
+    .verdict-short-desc {
+      color: var(--text-muted);
+      line-height: 1.6;
+      font-size: 1rem;
+    }
+
+    /* Detailed Sections */
+    .verdict-detail-section {
+      margin: 80px 0;
+    }
+
+    .section-title {
+      font-size: 2.5rem;
+      font-weight: 800;
+      text-align: center;
+      margin-bottom: 60px;
+      color: var(--text-primary);
+    }
+
+    .verdict-detail-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 32px;
+      margin-bottom: 60px;
+    }
+
+    .verdict-detail-card {
+      background: rgba(10, 12, 40, 0.7);
+      border-radius: 16px;
+      padding: 32px;
+      border: 2px solid rgba(79, 70, 229, 0.2);
+      transition: all 0.3s;
+    }
+
+    .verdict-detail-card:hover {
+      border-color: rgba(79, 70, 229, 0.5);
+      transform: translateY(-4px);
+      box-shadow: 0 12px 40px rgba(79, 70, 229, 0.2);
+    }
+
+    .detail-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .detail-icon {
+      width: 64px;
+      height: 64px;
+      object-fit: contain;
+      flex-shrink: 0;
+      border-radius: 14px;
+      filter: drop-shadow(0 0 12px rgba(79, 70, 229, 0.5));
+    }
+
+    .detail-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .detail-label {
+      display: inline-block;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      margin-top: 8px;
+    }
+
+    .detail-label.true {
+      background: rgba(16, 185, 129, 0.2);
+      color: #10b981;
+    }
+
+    .detail-label.misleading {
+      background: rgba(245, 158, 11, 0.2);
+      color: #f59e0b;
+    }
+
+    .detail-label.false {
+      background: rgba(239, 68, 68, 0.2);
+      color: #ef4444;
+    }
+
+    .detail-label.unverifiable {
+      background: rgba(129, 140, 248, 0.2);
+      color: #818cf8;
+    }
+
+    .detail-description {
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+
+    .criteria-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .criteria-list li {
+      padding: 12px 0;
+      padding-left: 32px;
+      position: relative;
+      color: var(--text-primary);
+    }
+
+    .criteria-list li::before {
+      content: '✓';
+      position: absolute;
+      left: 0;
+      color: #10b981;
+      font-weight: 900;
+    }
+
+    .criteria-list li.exclude::before {
+      content: '✗';
+      color: #ef4444;
+    }
+
+    /* Examples */
+    .example-box {
+      background: rgba(0, 0, 0, 0.3);
+      border-left: 4px solid;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+
+    .example-box.true {
+      border-color: #10b981;
+    }
+
+    .example-box.misleading {
+      border-color: #f59e0b;
+    }
+
+    .example-box.false {
+      border-color: #ef4444;
+    }
+
+    .example-box.unverifiable {
+      border-color: #818cf8;
+    }
+
+    .example-label {
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+      opacity: 0.7;
+    }
+
+    .example-text {
+      color: var(--text-primary);
+      line-height: 1.6;
+      font-style: italic;
+    }
+
+    /* Usage Info */
+    .usage-info {
+      background: rgba(79, 70, 229, 0.1);
+      border: 2px solid rgba(79, 70, 229, 0.3);
+      border-radius: 16px;
+      padding: 40px;
+      margin: 60px 0;
+    }
+
+    .usage-title {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 24px;
+    }
+
+    .usage-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 24px;
+    }
+
+    .usage-item {
+      text-align: center;
+    }
+
+    .usage-icon img {
+      width: 72px;
+      height: 72px;
+      object-fit: contain;
+      margin-bottom: 16px;
+      filter: drop-shadow(0 0 16px rgba(79, 70, 229, 0.5));
+      transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .usage-item:hover .usage-icon img {
+      transform: scale(1.15) rotate(-6deg);
+    }
+
+    .usage-text {
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .verdicts-page {
+        padding: 80px 16px 40px;
+      }
+
+      .verdicts-title {
+        font-size: 2rem;
+      }
+
+      .verdict-main-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .verdict-detail-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .section-title {
+        font-size: 1.8rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Navigation -->
+  <nav class="nav">
+    <div class="nav-logo">
+      <div class="nav-logo-icon">
+        <img src="ai-hero.png" alt="VeritasAI logo" />
+      </div>
+      <div>
+        <div class="nav-logo-text"><span>Neural </span>Syndicates</div>
+      </div>
+    </div>
+    <div class="nav-badge">HACKATHON DEMO</div>
+    <div class="nav-links">
+      <a href="index.html#analyze">Analyze</a>
+      <a href="how-it-works.html">How It Works</a>
+      <a href="verdicts.html" class="active">Verdicts</a>
+      <select id="languageSelector3" class="language-selector" onchange="changeLanguage(this.value)">
+        <option value="en">English</option>
+        <option value="ta">தமிழ்</option>
+        <option value="hi">हिन्दी</option>
+        <option value="te">తెలుగు</option>
+        <option value="ja">日本語</option>
+      </select>
+    </div>
+  </nav>
+
+  <!-- Verdicts Content -->
+  <div class="verdicts-page">
+    <div class="verdicts-container">
+
+      <!-- Header -->
+      <div class="verdicts-header">
+        <h1 class="verdicts-title">Verdict Classification System</h1>
+        <p class="verdicts-subtitle">
+          Understanding our four-tier fact-checking verdict system. Each verdict provides
+          transparent reasoning, confidence scoring, and evidence-based analysis to help you
+          make informed decisions about information credibility.
+        </p>
+      </div>
+
+      <!-- Main Verdict Cards -->
+      <div class="verdict-main-grid">
+        <div class="verdict-main-card true">
+          <img class="verdict-icon-large" src="verdict-true.png" alt="Accurate / True" />
+          <h3 class="verdict-name">Accurate / True</h3>
+          <p class="verdict-short-desc">
+            Claim is factually correct and supported by strong, credible evidence from multiple trusted sources.
+          </p>
+        </div>
+
+        <div class="verdict-main-card misleading">
+          <img class="verdict-icon-large" src="verdict-misleading.png" alt="Partially Misleading" />
+          <h3 class="verdict-name">Partially Misleading</h3>
+          <p class="verdict-short-desc">
+            Contains partial truth but is deceptive, incomplete, or taken out of context in significant ways.
+          </p>
+        </div>
+
+        <div class="verdict-main-card false">
+          <img class="verdict-icon-large" src="verdict-false.png" alt="False" />
+          <h3 class="verdict-name">False</h3>
+          <p class="verdict-short-desc">
+            Claim contradicts well-established facts and evidence from authoritative, verified sources.
+          </p>
+        </div>
+
+        <div class="verdict-main-card unverifiable">
+          <img class="verdict-icon-large" src="verdict-unverifiable.png" alt="Unverifiable" />
+          <h3 class="verdict-name">Unverifiable</h3>
+          <p class="verdict-short-desc">
+            Insufficient evidence exists to confirm or deny the claim with current available information.
+          </p>
+        </div>
+      </div>
+
+      <!-- Detailed Breakdown -->
+      <div class="verdict-detail-section">
+        <h2 class="section-title">Detailed Verdict Breakdown</h2>
+
+        <div class="verdict-detail-grid">
+          <!-- Accurate/True -->
+          <div class="verdict-detail-card">
+            <div class="detail-header">
+              <img class="detail-icon" src="verdict-true.png" alt="Accurate" />
+              <div>
+                <h3 class="detail-title">Accurate / True</h3>
+                <span class="detail-label true">VERIFIED</span>
+              </div>
+            </div>
+            <p class="detail-description">
+              Claims rated as Accurate or True have been verified against multiple high-quality sources
+              and are supported by strong empirical evidence, expert consensus, or official documentation.
+            </p>
+            <h4 style="color: var(--text-primary); margin: 16px 0 12px;">Criteria:</h4>
+            <ul class="criteria-list">
+              <li>Supported by peer-reviewed research</li>
+              <li>Confirmed by government or academic sources</li>
+              <li>Consistent with established scientific consensus</li>
+              <li>Verified by multiple independent fact-checkers</li>
+              <li>No significant contradictory evidence exists</li>
+            </ul>
+            <div class="example-box true">
+              <div class="example-label">Example Claim</div>
+              <p class="example-text">
+                "Water boils at 100°C (212°F) at sea level atmospheric pressure."
+              </p>
+            </div>
+          </div>
+
+          <!-- Partially Misleading -->
+          <div class="verdict-detail-card">
+            <div class="detail-header">
+              <img class="detail-icon" src="verdict-misleading.png" alt="Misleading" />
+              <div>
+                <h3 class="detail-title">Partially Misleading</h3>
+                <span class="detail-label misleading">CAUTION</span>
+              </div>
+            </div>
+            <p class="detail-description">
+              These claims contain elements of truth but omit crucial context, use selective framing,
+              or present information in a way that creates a distorted or incomplete picture.
+            </p>
+            <h4 style="color: var(--text-primary); margin: 16px 0 12px;">Characteristics:</h4>
+            <ul class="criteria-list">
+              <li>Technically true but lacks important context</li>
+              <li>Uses cherry-picked data or statistics</li>
+              <li>Presents correlation as causation</li>
+              <li>Outdated information presented as current</li>
+              <li>Exaggerates or overstates findings</li>
+            </ul>
+            <div class="example-box misleading">
+              <div class="example-label">Example Claim</div>
+              <p class="example-text">
+                "Vaccines cause side effects" (True, but omits that serious side effects are extremely rare, while
+                benefits vastly outweigh risks)
+              </p>
+            </div>
+          </div>
+
+          <!-- False -->
+          <div class="verdict-detail-card">
+            <div class="detail-header">
+              <img class="detail-icon" src="verdict-false.png" alt="False" />
+              <div>
+                <h3 class="detail-title">False</h3>
+                <span class="detail-label false">DEBUNKED</span>
+              </div>
+            </div>
+            <p class="detail-description">
+              False claims have been definitively contradicted by overwhelming evidence from authoritative
+              sources and expert consensus. These claims often originate from misinformation or disinformation
+              campaigns.
+            </p>
+            <h4 style="color: var(--text-primary); margin: 16px 0 12px;">Indicators:</h4>
+            <ul class="criteria-list">
+              <li>Contradicts peer-reviewed scientific research</li>
+              <li>Debunked by multiple fact-checking organizations</li>
+              <li>Based on fabricated or manipulated data</li>
+              <li>Rejected by subject matter experts</li>
+              <li>Origins trace to unreliable or biased sources</li>
+            </ul>
+            <div class="example-box false">
+              <div class="example-label">Example Claim</div>
+              <p class="example-text">
+                "The Earth is flat and NASA is hiding the truth."
+              </p>
+            </div>
+          </div>
+
+          <!-- Unverifiable -->
+          <div class="verdict-detail-card">
+            <div class="detail-header">
+              <img class="detail-icon" src="verdict-unverifiable.png" alt="Unverifiable" />
+              <div>
+                <h3 class="detail-title">Unverifiable</h3>
+                <span class="detail-label unverifiable">INSUFFICIENT DATA</span>
+              </div>
+            </div>
+            <p class="detail-description">
+              Unverifiable claims lack sufficient available evidence to make a determination.
+              This may be due to emerging topics, limited data, or claims about private/internal matters.
+            </p>
+            <h4 style="color: var(--text-primary); margin: 16px 0 12px">When Used:</h4>
+            <ul class="criteria-list">
+              <li>Emerging events with limited reliable reporting</li>
+              <li>Claims about future predictions or speculation</li>
+              <li>Private or internal matters without documentation</li>
+              <li>Anecdotal evidence without corroboration</li>
+              <li>Topics requiring specialized expertise not available</li>
+            </ul>
+            <div class="example-box unverifiable">
+              <div class="example-label">Example Claim</div>
+              <p class="example-text">
+                "This new supplement will cure all diseases within 5 years."
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- How Verdicts Are Determined -->
+      <div class="usage-info">
+        <h2 class="usage-title">How Verdicts Are Determined</h2>
+        <div class="usage-grid">
+          <div class="usage-item">
+            <div class="usage-icon"><img src="icon-search.png" alt="Evidence Quality" /></div>
+            <p class="usage-text">
+              <strong>Evidence Quality</strong><br />
+              Sources evaluated for credibility, recency, and authority
+            </p>
+          </div>
+          <div class="usage-item">
+            <div class="usage-icon"><img src="icon-evidence.png" alt="Confidence Scoring" /></div>
+            <p class="usage-text">
+              <strong>Confidence Scoring</strong><br />
+              AI assigns percentage based on evidence strength
+            </p>
+          </div>
+          <div class="usage-item">
+            <div class="usage-icon"><img src="icon-agents.png" alt="Multi-Agent Review" /></div>
+            <p class="usage-text">
+              <strong>Multi-Agent Review</strong><br />
+              Five specialized AI agents analyze each claim
+            </p>
+          </div>
+          <div class="usage-item">
+            <div class="usage-icon"><img src="icon-input.png" alt="Source Cross-Reference" /></div>
+            <p class="usage-text">
+              <strong>Source Cross-Reference</strong><br />
+              Claims checked against trusted databases and organizations
+            </p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="i18n.js"></script>
+  <script src="storage.js"></script>
+  <script>
+    // Initialize language selector
+    const savedLang = localStorage.getItem('veritasai_language') || 'en';
+    document.getElementById('languageSelector3').value = savedLang;
+    I18N.init();
+    I18N.setLanguage(savedLang);
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>How It Works - Neural Syndicates</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="animations.css" />
+  <style>
+    /* Architecture Page Styles */
+    .architecture-page {
+      min-height: 100vh;
+      padding: 100px 20px 60px;
+      background: linear-gradient(135deg, #020208 0%, #060612 100%);
+    }
+
+    .architecture-container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .architecture-header {
+      text-align: center;
+      margin-bottom: 60px;
+    }
+
+    .architecture-title {
+      font-size: 3rem;
+      font-weight: 900;
+      background: linear-gradient(135deg, #a5b4fc, #0ea5e9, #34d399);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-size: 200% 200%;
+      animation: gradient-shift 3s ease infinite;
+      margin-bottom: 16px;
+    }
+
+    .architecture-subtitle {
+      font-size: 1.2rem;
+      color: var(--text-muted);
+      max-width: 800px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    /* AI Neural Network Visualization */
+    .neural-network {
+      position: relative;
+      width: 100%;
+      height: 600px;
+      margin: 60px 0;
+      border-radius: 24px;
+      background: rgba(10, 12, 40, 0.5);
+      border: 2px solid rgba(79, 70, 229, 0.2);
+      overflow: hidden;
+    }
+
+    .neural-node {
+      position: absolute;
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(79, 70, 229, 0.3), rgba(14, 165, 233, 0.3));
+      border: 3px solid rgba(79, 70, 229, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      box-shadow: 0 0 30px rgba(79, 70, 229, 0.4);
+      animation: node-pulse 3s infinite;
+      z-index: 2;
+    }
+
+    @keyframes node-pulse {
+
+      0%,
+      100% {
+        transform: scale(1);
+        box-shadow: 0 0 30px rgba(79, 70, 229, 0.4);
+      }
+
+      50% {
+        transform: scale(1.05);
+        box-shadow: 0 0 50px rgba(79, 70, 229, 0.6);
+      }
+    }
+
+    .neural-connection {
+      position: absolute;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, rgba(79, 70, 229, 0.4), transparent);
+      transform-origin: left center;
+      z-index: 1;
+    }
+
+    .data-flow {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background: #0ea5e9;
+      border-radius: 50%;
+      box-shadow: 0 0 20px #0ea5e9;
+      animation: flow-along 2s linear infinite;
+      z-index: 3;
+    }
+
+    @keyframes flow-along {
+      0% {
+        opacity: 0;
+      }
+
+      10% {
+        opacity: 1;
+      }
+
+      90% {
+        opacity: 1;
+      }
+
+      100% {
+        opacity: 0;
+      }
+    }
+
+    /* Component Cards */
+    .component-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 24px;
+      margin: 60px 0;
+    }
+
+    .component-card {
+      background: rgba(10, 12, 40, 0.6);
+      border: 2px solid rgba(79, 70, 229, 0.3);
+      border-radius: 16px;
+      padding: 32px;
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .component-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: linear-gradient(90deg, #4f46e5, #0ea5e9, #06b6d4);
+    }
+
+    .component-card:hover {
+      transform: translateY(-8px);
+      border-color: rgba(79, 70, 229, 0.6);
+      box-shadow: 0 12px 40px rgba(79, 70, 229, 0.3);
+    }
+
+    .component-icon img {
+      width: 72px;
+      height: 72px;
+      object-fit: contain;
+      margin-bottom: 16px;
+      display: block;
+      filter: drop-shadow(0 0 18px rgba(79, 70, 229, 0.5));
+      transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.3s ease;
+    }
+
+    .component-card:hover .component-icon img {
+      transform: scale(1.15) rotateY(15deg);
+      filter: drop-shadow(0 0 28px rgba(6, 182, 212, 0.7));
+    }
+
+    .component-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 12px;
+    }
+
+    .component-desc {
+      color: var(--text-muted);
+      line-height: 1.6;
+      font-size: 0.95rem;
+    }
+
+    /* Process Flow */
+    .process-flow {
+      margin: 80px 0;
+    }
+
+    .process-steps {
+      position: relative;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .process-step {
+      display: flex;
+      gap: 24px;
+      margin-bottom: 40px;
+      align-items: center;
+    }
+
+    .process-step:nth-child(even) {
+      flex-direction: row-reverse;
+    }
+
+    .step-number {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #4f46e5, #0ea5e9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      font-weight: 900;
+      color: white;
+      flex-shrink: 0;
+      box-shadow: 0 0 30px rgba(79, 70, 229, 0.5);
+    }
+
+    .step-content {
+      flex: 1;
+      background: rgba(10, 12, 40, 0.6);
+      border: 2px solid rgba(79, 70, 229, 0.3);
+      border-radius: 16px;
+      padding: 24px;
+    }
+
+    .step-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+
+    .step-desc {
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .architecture-page {
+        padding: 80px 16px 40px;
+      }
+
+      .architecture-title {
+        font-size: 2rem;
+      }
+
+      .neural-network {
+        height: 400px;
+      }
+
+      .neural-node {
+        width: 60px;
+        height: 60px;
+        font-size: 1.5rem;
+      }
+
+      .component-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .process-step {
+        flex-direction: column !important;
+        text-align: center;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Navigation -->
+  <nav class="nav">
+    <div class="nav-logo">
+      <div class="nav-logo-icon">
+        <img src="ai-hero.png" alt="VeritasAI logo" />
+      </div>
+      <div>
+        <div class="nav-logo-text"><span>Neural </span>Syndicates</div>
+      </div>
+    </div>
+    <div class="nav-badge">HACKATHON DEMO</div>
+    <div class="nav-links">
+      <a href="index.html#analyze">Analyze</a>
+      <a href="how-it-works.html" class="active">How It Works</a>
+      <a href="verdicts.html">Verdicts</a>
+      <select id="languageSelector2" class="language-selector" onchange="changeLanguage(this.value)">
+        <option value="en">English</option>
+        <option value="ta">தமிழ்</option>
+        <option value="hi">हिन्दी</option>
+        <option value="te">తెలుగు</option>
+        <option value="ja">日本語</option>
+      </select>
+    </div>
+  </nav>
+
+  <!-- Architecture Content -->
+  <div class="architecture-page">
+    <div class="architecture-container">
+
+      <!-- Header -->
+      <div class="architecture-header">
+        <h1 class="architecture-title">System Architecture</h1>
+        <p class="architecture-subtitle">
+          Explore the neural network architecture powering VeritasAI's advanced fact-checking capabilities.
+          Our multi-layered AI system processes information through specialized components working in harmony.
+        </p>
+      </div>
+
+      <!-- Neural Network Visualization -->
+      <div class="neural-network" id="neuralNetwork">
+        <!-- Nodes will be dynamically added by JavaScript -->
+      </div>
+
+      <!-- Component Grid -->
+      <div class="component-grid">
+        <div class="component-card">
+          <div class="component-icon"><img src="icon-input.png" alt="Input Processing" /></div>
+          <h3 class="component-title">Input Processing Layer</h3>
+          <p class="component-desc">
+            Accepts multiple input formats: text, images, and voice. Real-time preprocessing with
+            language detection, OCR for images, and speech-to-text conversion. Supports 5+ languages
+            with automatic translation capabilities.
+          </p>
+        </div>
+
+        <div class="component-card">
+          <div class="component-icon"><img src="icon-search.png" alt="Claim Extraction" /></div>
+          <h3 class="component-title">Claim Extraction Engine</h3>
+          <p class="component-desc">
+            Advanced NLP algorithms identify discrete factual claims from input content.
+            Segments complex statements into verifiable units while preserving context
+            and nuanced meaning for accurate analysis.
+          </p>
+        </div>
+
+        <div class="component-card">
+          <div class="component-icon"><img src="icon-agents.png" alt="Multi-Agent AI" /></div>
+          <h3 class="component-title">Multi-Agent AI System</h3>
+          <p class="component-desc">
+            Five specialized AI agents work collaboratively: Research Agent gathers evidence,
+            Analysis Agent evaluates credibility, Bias Agent detects rhetorical devices,
+            Correction Agent generates fact-based corrections, and Quality Agent ensures accuracy.
+          </p>
+        </div>
+
+        <div class="component-card">
+          <div class="component-icon"><img src="icon-evidence.png" alt="Evidence Aggregator" /></div>
+          <h3 class="component-title">Evidence Aggregator</h3>
+          <p class="component-desc">
+            Cross-references claims against trusted sources including academic databases,
+            government records, fact-checking organizations, and verified news outlets.
+            Assigns confidence scores based on source quality and consensus.
+          </p>
+        </div>
+
+        <div class="component-card">
+          <div class="component-icon"><img src="icon-verdict.png" alt="Verdict Classification" /></div>
+          <h3 class="component-title">Verdict Classification</h3>
+          <p class="component-desc">
+            Four-tier verdict system: Accurate/True, Partially Misleading, False,
+            and Unverifiable. Each verdict includes detailed reasoning, confidence
+            percentages, and supporting evidence with transparent methodology.
+          </p>
+        </div>
+
+        <div class="component-card">
+          <div class="component-icon"><img src="icon-security.png" alt="Security Layer" /></div>
+          <h3 class="component-title">Security & Audit Layer</h3>
+          <p class="component-desc">
+            Comprehensive monitoring for audit-related keywords across all input vectors
+            (text, images, voice). Persistent lock screen with escalating durations prevents
+            inspection and maintains system integrity during sensitive operations.
+          </p>
+        </div>
+      </div>
+
+      <!-- Process Flow -->
+      <div class="process-flow">
+        <h2 style="text-align: center; font-size: 2rem; margin-bottom: 60px; color: var(--text-primary);">
+          Data Flow Process
+        </h2>
+
+        <div class="process-steps">
+          <div class="process-step">
+            <div class="step-number">1</div>
+            <div class="step-content">
+              <h3 class="step-title">Content Submission</h3>
+              <p class="step-desc">
+                User submits content via text input, image upload, or voice recording.
+                System performs initial validation and format detection.
+              </p>
+            </div>
+          </div>
+
+          <div class="process-step">
+            <div class="step-number">2</div>
+            <div class="step-content">
+              <h3 class="step-title">Preprocessing & Conversion</h3>
+              <p class="step-desc">
+                Images undergo OCR processing, voice is converted to text using speech recognition,
+                and all content is normalized for consistent analysis regardless of input format.
+              </p>
+            </div>
+          </div>
+
+          <div class="process-step">
+            <div class="step-number">3</div>
+            <div class="step-content">
+              <h3 class="step-title">Claim Extraction</h3>
+              <p class="step-desc">
+                NLP pipeline identifies and extracts individual factual claims, separating
+                opinions from verifiable statements and preparing each for independent analysis.
+              </p>
+            </div>
+          </div>
+
+          <div class="process-step">
+            <div class="step-number">4</div>
+            <div class="step-content">
+              <h3 class="step-title">Multi-Agent Analysis</h3>
+              <p class="step-desc">
+                Specialized AI agents collaborate to evaluate claims: gathering evidence,
+                detecting bias, generating corrections, and performing quality checks
+                through iterative refinement.
+              </p>
+            </div>
+          </div>
+
+          <div class="process-step">
+            <div class="step-number">5</div>
+            <div class="step-content">
+              <h3 class="step-title">Verdict Generation</h3>
+              <p class="step-desc">
+                Final verdicts assigned with confidence scores, detailed explanations,
+                evidence sources, and step-by-step reasoning traces for complete transparency.
+              </p>
+            </div>
+          </div>
+
+          <div class="process-step">
+            <div class="step-number">6</div>
+            <div class="step-content">
+              <h3 class="step-title">Results Presentation</h3>
+              <p class="step-desc">
+                Interactive results display with expandable claim cards, visual confidence indicators,
+                bias detection flags, and exportable reports for sharing and documentation.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="i18n.js"></script>
+  <script src="storage.js"></script>
+  <script>
+    // Initialize language selector
+    const savedLang = localStorage.getItem('veritasai_language') || 'en';
+    document.getElementById('languageSelector2').value = savedLang;
+    I18N.init();
+    I18N.setLanguage(savedLang);
+
+    // Neural Network Visualization
+    function createNeuralNetwork() {
+      const container = document.getElementById('neuralNetwork');
+      const nodes = [
+        { icon: 'icon-input.png', x: 10, y: 50, label: 'Input' },
+        { icon: 'icon-search.png', x: 30, y: 30, label: 'Extract' },
+        { icon: 'icon-agents.png', x: 50, y: 50, label: 'AI Core' },
+        { icon: 'icon-evidence.png', x: 70, y: 30, label: 'Evidence' },
+        { icon: 'icon-verdict.png', x: 90, y: 50, label: 'Verdict' }
+      ];
+
+      // Create nodes
+      nodes.forEach((node, i) => {
+        const nodeEl = document.createElement('div');
+        nodeEl.className = 'neural-node';
+        nodeEl.style.cssText = `left:${node.x}%;top:${node.y}%;`;
+        nodeEl.style.fontSize = '0';
+        const img = document.createElement('img');
+        img.src = node.icon;
+        img.alt = node.label;
+        img.style.cssText = 'width:44px;height:44px;object-fit:contain;filter:drop-shadow(0 0 10px rgba(6,182,212,0.7));';
+        nodeEl.appendChild(img);
+        nodeEl.title = node.label;
+        container.appendChild(nodeEl);
+
+        // Create connections
+        if (i < nodes.length - 1) {
+          const nextNode = nodes[i + 1];
+          const connection = document.createElement('div');
+          connection.className = 'neural-connection';
+
+          const x1 = node.x * container.offsetWidth / 100 + 40;
+          const y1 = node.y * container.offsetHeight / 100 + 40;
+          const x2 = nextNode.x * container.offsetWidth / 100;
+          const y2 = nextNode.y * container.offsetHeight / 100 + 40;
+
+          const length = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+          const angle = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
+
+          connection.style.width = `${length}px`;
+          connection.style.left = `${x1}px`;
+          connection.style.top = `${y1}px`;
+          connection.style.transform = `rotate(${angle}deg)`;
+          container.appendChild(connection);
+
+          // Add data flow animation
+          setTimeout(() => {
+            const flow = document.createElement('div');
+            flow.className = 'data-flow';
+            connection.appendChild(flow);
+
+            flow.animate([
+              { left: '0%', opacity: 0 },
+              { left: '10%', opacity: 1 },
+              { left: '90%', opacity: 1 },
+              { left: '100%', opacity: 0 }
+            ], {
+              duration: 2000,
+              iterations: Infinity
+            });
+          }, i * 500);
+        }
+      });
+    }
+
+    // Initialize visualization on load
+    window.addEventListener('load', () => {
+      setTimeout(createNeuralNetwork, 500);
+    });
+
+    // Handle window resize
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(() => {
+        document.getElementById('neuralNetwork').innerHTML = '';
+        createNeuralNetwork();
+      }, 300);
+    });
+  </script>
+</body>
+
+</html>

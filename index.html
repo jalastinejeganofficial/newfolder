@@ -9,6 +9,7 @@
     content="AI-powered real-time misinformation detection, analysis, and correction platform. Detect false, misleading, or unverifiable claims with confidence scoring and transparent reasoning." />
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="animations.css" />
+  <link rel="stylesheet" href="ai-assistant-styles.css" />
 </head>
 
 <body>
@@ -27,8 +28,8 @@
       <div class="nav-badge">HACKATHON DEMO</div>
       <div class="nav-links">
         <a href="#analyze" data-i18n="nav.analyze">Analyze</a>
-        <a href="#how" data-i18n="nav.howItWorks">How It Works</a>
-        <a href="#verdicts" data-i18n="nav.verdicts">Verdicts</a>
+        <a href="how-it-works.html" data-i18n="nav.howItWorks">How It Works</a>
+        <a href="verdicts.html" data-i18n="nav.verdicts">Verdicts</a>
         <!-- Language Selector -->
         <select id="languageSelector" class="language-selector" onchange="changeLanguage(this.value)"
           title="Select Language">
@@ -467,6 +468,8 @@
   <script src="image-analyzer.js"></script>
   <script src="voice-input.js"></script>
   <script src="text-to-speech.js"></script>
+  <script src="screen-lock.js"></script>
+  <script src="ai-assistant.js"></script>
   <script src="config.js"></script>
   <script src="app.js"></script>
   <script src="animations.js"></script>
