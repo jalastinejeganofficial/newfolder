@@ -4,6 +4,26 @@
 let analysisHistory = [];
 let currentAnalysis = null;
 
+// ===== GLOBAL LANGUAGE FUNCTION =====
+window.changeLanguage = function(languageCode) {
+  I18N.setLanguage(languageCode);
+  
+  // Update language selector
+  const selector = document.getElementById('languageSelector');
+  if (selector) {
+    selector.value = languageCode;
+  }
+  
+  // Save to storage
+  StorageManager.saveLanguage(languageCode);
+  
+  // Re-render sample pills
+  initSamplePills();
+  
+  // Show toast notification
+  showToast(I18N.t('toast.done'), '🌍');
+};
+
 // ===== DOM ELEMENTS =====
 const elements = {
   inputText: document.getElementById('inputText'),
@@ -39,9 +59,28 @@ const samples = [
 
 // ===== INITIALIZATION =====
 document.addEventListener('DOMContentLoaded', () => {
+  // Initialize storage and i18n systems
+  StorageManager.init();
+  I18N.init();
+  
+  // Load saved language and set selector
+  const savedLanguage = StorageManager.getLanguage();
+  const selector = document.getElementById('languageSelector');
+  if (selector) {
+    selector.value = savedLanguage;
+  }
+  
+  // Load history from storage
+  loadHistoryFromStorage();
+  
+  // Initialize UI
   initSamplePills();
   initCharCounter();
-  console.log('VeritasAI initialized');
+  initImageUpload();
+  initAnalyzeButton();
+  initClearButton();
+  
+  console.log('VeritasAI initialized with language:', savedLanguage);
 });
 
 // ===== SAMPLE PILLS =====
@@ -54,7 +93,7 @@ function initSamplePills() {
 function useSample(text) {
   elements.inputText.value = text;
   updateCharCount();
-  showToast('Sample loaded', '📋');
+  showToast(I18N.t('toast.sampleLoaded'), '📋');
 }
 
 // ===== CHARACTER COUNTER =====
@@ -75,13 +114,180 @@ function updateCharCount() {
   }
 }
 
+// ===== IMAGE UPLOAD HANDLER =====
+let uploadedImageBase64 = null;
+
+function initImageUpload() {
+  const imageUpload = document.getElementById('imageUpload');
+  const imagePreview = document.getElementById('imagePreview');
+  const previewImg = document.getElementById('previewImg');
+  const removeBtn = document.getElementById('removeImage');
+  
+  if (!imageUpload || !imagePreview) {
+    Logger.warn('Image upload elements not found in DOM');
+    return;
+  }
+  
+  // Handle file selection
+  imageUpload.addEventListener('change', async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    Logger.info('Image selected', { 
+      fileName: file.name, 
+      fileSize: file.size,
+      fileType: file.type 
+    });
+    
+    // Validate file
+    if (!file.type.startsWith('image/')) {
+      showToast('Please select a valid image file', '⚠️');
+      Logger.warn('Invalid file type selected', { type: file.type });
+      return;
+    }
+    
+    if (file.size > 10 * 1024 * 1024) {
+      showToast('Image size must be less than 10MB', '⚠️');
+      Logger.warn('Image too large', { size: file.size });
+      return;
+    }
+    
+    try {
+      // Read and convert to base64
+      const base64 = await readFileAsBase64(file);
+      uploadedImageBase64 = base64;
+      
+      // Show preview
+      previewImg.src = base64;
+      imagePreview.style.display = 'block';
+      
+      Logger.info('Image loaded successfully', { 
+        base64Length: base64.length,
+        previewDisplayed: true 
+      });
+      
+      // Auto-analyze after brief delay
+      setTimeout(() => {
+        analyzeImage(base64);
+      }, 500);
+      
+    } catch (error) {
+      Logger.error('Failed to read image', { error: error.message });
+      showToast('Failed to load image. Please try again.', '❌');
+    }
+  });
+  
+  // Remove image
+  if (removeBtn) {
+    removeBtn.addEventListener('click', () => {
+      uploadedImageBase64 = null;
+      imagePreview.style.display = 'none';
+      previewImg.src = '';
+      imageUpload.value = '';
+      Logger.info('Image removed by user');
+      showToast('Image removed', '🗑️');
+    });
+  }
+}
+
+function readFileAsBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error('Failed to read file'));
+    reader.readAsDataURL(file);
+  });
+}
+
+async function analyzeImage(base64Image) {
+  Logger.info('Starting image analysis', { 
+    imageLength: base64Image.length,
+    agent: MultiAgentSystem.getCurrentAgent().name 
+  });
+  
+  // Show loading state
+  showLoading();
+  
+  try {
+    // Call vision API through ImageAnalyzer
+    const result = await ImageAnalyzer.analyzeImage(base64Image);
+    
+    Logger.analytics('image_analysis_completed', {
+      claimsCount: result.claims?.length || 0,
+      overallCredibility: result.overall_credibility,
+      processingTime: result.processing_time
+    });
+    
+    // Display results
+    currentAnalysis = result;
+    displayResults(result);
+    hideLoading();
+    
+    // Save to history
+    saveToHistory(result);
+    
+    Logger.info('Image analysis completed successfully', {
+      verdict: result.overall_credibility,
+      claimsAnalyzed: result.claims?.length
+    });
+    
+  } catch (error) {
+    Logger.error('Image analysis failed', { 
+      error: error.message, 
+      stack: error.stack 
+    });
+    showError(`Failed to analyze image: ${error.message}`);
+    hideLoading();
+  }
+}
+
 // ===== CLEAR INPUT =====
 function clearInput() {
   elements.inputText.value = '';
   updateCharCount();
   hideResults();
   hideError();
-  showToast('Input cleared', '🗑️');
+  showToast(I18N.t('toast.inputCleared'), '🗑️');
+  Logger.info('Input cleared by user');
+}
+
+// ===== ANALYZE BUTTON INITIALIZATION =====
+function initAnalyzeButton() {
+  if (!elements.analyzeBtn) {
+    console.error('ERROR: Analyze button element not found!');
+    return;
+  }
+  
+  elements.analyzeBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    analyzeContent();
+  });
+  
+  // Also support Enter key (Ctrl+Enter or Cmd+Enter)
+  elements.inputText.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      e.preventDefault();
+      if (elements.inputText.value.trim().length > 0) {
+        analyzeContent();
+      }
+    }
+  });
+}
+
+// ===== CLEAR BUTTON INITIALIZATION =====
+function initClearButton() {
+  if (!elements.clearBtn) {
+    Logger.warn('Clear button element not found');
+    return;
+  }
+  
+  // Remove inline onclick and add proper event listener
+  elements.clearBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    clearInput();
+  });
+  
+  Logger.info('Clear button initialized');
 }
 
 // ===== ANALYZE CONTENT =====
@@ -89,12 +295,12 @@ async function analyzeContent() {
   const text = elements.inputText.value.trim();
   
   if (!text) {
-    showError('Please enter some text to analyze');
+    showError(I18N.t('error.pleaseEnterText'));
     return;
   }
   
   if (text.length < 10) {
-    showError('Please enter at least 10 characters');
+    showError(I18N.t('error.minCharacters'));
     return;
   }
   
@@ -108,16 +314,16 @@ async function analyzeContent() {
     // Call API
     const result = await callLLMAPI(text);
     
-    // Process and display results
+    // Display results
     displayResults(result);
     
     // Add to history
     addToHistory(text, result);
     
-    showToast('Analysis complete!', '✅');
+    showToast(I18N.t('toast.analysisComplete'), '✅');
   } catch (error) {
     console.error('Analysis error:', error);
-    showError(error.message || 'Failed to analyze content. Please try again.');
+    showError(error.message || I18N.t('error.analysisFailedMsg'));
   } finally {
     hideLoading();
     disableAnalyzeButton(false);
@@ -140,6 +346,8 @@ async function callLLMAPI(text) {
   
   for (const model of modelsToTry) {
     try {
+      console.log(`Trying model: ${model}`);
+      
       const response = await fetch(API_URL, {
         method: 'POST',
         headers: {
@@ -155,12 +363,15 @@ async function callLLMAPI(text) {
             { role: 'user', content: `Analyze this text:\n\n${text}` }
           ],
           temperature: 0.3,
-          max_tokens: 2000
+          max_tokens: 3000
         })
       });
       
+      console.log(`Response status: ${response.status}`);
+      
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        console.error('API Error:', errorData);
         throw new Error(
           errorData.error?.message || 
           `API Error: ${response.status} ${response.statusText}`
@@ -200,42 +411,114 @@ async function callLLMAPI(text) {
   throw lastError || new Error('All AI models failed. Please try again later.');
 }
 
-// ===== DISPLAY RESULTS =====
+// ===== DISPLAY RESULTS WITH ENHANCED ANIMATIONS AND AUDIO =====
 function displayResults(data) {
+  console.log('DEBUG: displayResults called with data:', JSON.stringify(data, null, 2));
+  
+  if (!data) {
+    console.error('ERROR: No data provided to displayResults');
+    showError('No analysis results received from API');
+    return;
+  }
+  
   currentAnalysis = data;
   
-  // Overall credibility score
+  // Check if required elements exist
+  console.log('DEBUG: Checking DOM elements...');
+  const elementStatus = {
+    overallScore: !!elements.overallScore,
+    overallSummary: !!elements.overallSummary,
+    claimsList: !!elements.claimsList,
+    resultsSection: !!elements.resultsSection,
+    ringFill: !!elements.ringFill,
+    claimCount: !!elements.claimCount
+  };
+  console.log('DEBUG: Element status:', elementStatus);
+  
+  // Overall credibility score with animation
   const overallCredibility = data.overall_credibility || 0;
-  elements.overallScore.textContent = overallCredibility;
-  elements.overallSummary.textContent = data.summary || '';
+  console.log('DEBUG: Overall credibility:', overallCredibility);
   
-  // Update ring fill (circumference = 2 * PI * 45 ≈ 283)
-  const circumference = 283;
-  const offset = circumference - (overallCredibility / 100) * circumference;
-  elements.ringFill.style.strokeDasharray = circumference;
-  elements.ringFill.style.strokeDashoffset = offset;
-  
-  // Set ring color based on score
-  let ringColor = '#ef4444'; // false
-  if (overallCredibility >= 75) ringColor = '#22c55e'; // true
-  else if (overallCredibility >= 50) ringColor = '#f59e0b'; // misleading
-  else if (overallCredibility >= 25) ringColor = '#6366f1'; // unverifiable
-  
-  elements.ringFill.style.stroke = ringColor;
-  
-  // Claims list
-  renderClaims(data.claims);
-  
-  // Update claim count
-  elements.claimCount.textContent = `${data.claims.length} claim${data.claims.length !== 1 ? 's' : ''} analyzed`;
-  
-  // Show results section
-  elements.resultsSection.classList.add('visible');
-  
-  // Scroll to results
-  setTimeout(() => {
-    elements.resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }, 100);
+  try {
+    // Animate the score counting up
+    if (elements.overallScore) {
+      animateValue(elements.overallScore, 0, overallCredibility, 1500);
+      console.log('DEBUG: Score animation started');
+    }
+    
+    if (elements.overallSummary) {
+      elements.overallSummary.textContent = data.summary || 'No summary provided';
+      console.log('DEBUG: Summary set:', data.summary?.substring(0, 50));
+    }
+    
+    // Update ring fill
+    if (elements.ringFill) {
+      const circumference = 283;
+      const offset = circumference - (overallCredibility / 100) * circumference;
+      elements.ringFill.style.strokeDasharray = circumference;
+      elements.ringFill.style.strokeDashoffset = offset;
+      
+      let ringColor = '#ef4444';
+      if (overallCredibility >= 75) ringColor = '#22c55e';
+      else if (overallCredibility >= 50) ringColor = '#f59e0b';
+      else if (overallCredibility >= 25) ringColor = '#6366f1';
+      
+      elements.ringFill.style.stroke = ringColor;
+      console.log('DEBUG: Ring updated with color:', ringColor);
+    }
+    
+    // Claims list
+    if (data.claims && Array.isArray(data.claims)) {
+      console.log('DEBUG: Rendering', data.claims.length, 'claims');
+      renderClaims(data.claims);
+    } else {
+      console.error('ERROR: No claims array in data');
+    }
+    
+    // Update claim count
+    if (elements.claimCount) {
+      animateValue(elements.claimCount, 0, data.claims.length, 1000, ' claims analyzed');
+    }
+    
+    // Show results section
+    if (elements.resultsSection) {
+      elements.resultsSection.classList.add('visible');
+      console.log('DEBUG: Results section made visible');
+      
+      setTimeout(() => {
+        const claimCards = document.querySelectorAll('.claim-card');
+        console.log('DEBUG: Found', claimCards.length, 'claim cards');
+        
+        if (typeof VisualEffects !== 'undefined') {
+          VisualEffects.staggeredFadeIn(claimCards, 150);
+        }
+        
+        addTextToSpeechButtons();
+      }, 300);
+    }
+    
+    // Scroll to results
+    setTimeout(() => {
+      if (elements.resultsSection) {
+        elements.resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 100);
+    
+    // Auto-speak
+    const autoSpeak = localStorage.getItem('veritasai_auto_speak') === 'true';
+    if (autoSpeak && typeof TextToSpeech !== 'undefined') {
+      setTimeout(() => {
+        TextToSpeech.speakResults(data);
+      }, 1000);
+    }
+    
+    console.log('DEBUG: displayResults completed successfully');
+    
+  } catch (error) {
+    console.error('CRITICAL ERROR in displayResults:', error);
+    console.error('Stack:', error.stack);
+    showError('Failed to display results: ' + error.message);
+  }
 }
 
 function renderClaims(claims) {
@@ -426,21 +709,46 @@ function toggleClaim(index) {
 }
 
 // ===== HISTORY MANAGEMENT =====
+function loadHistoryFromStorage() {
+  const savedHistory = StorageManager.getHistory();
+  if (savedHistory && savedHistory.length > 0) {
+    analysisHistory = savedHistory;
+    renderHistory();
+  }
+}
+
 function addToHistory(inputText, result) {
   const item = {
     id: Date.now(),
     text: inputText.substring(0, 80) + (inputText.length > 80 ? '...' : ''),
     credibility: result.overall_credibility,
     claims: result.claims.length,
-    timestamp: new Date()
+    timestamp: new Date(),
+    // Store full data for caching
+    fullData: result,
+    inputText: inputText
   };
   
+  // Add to in-memory array
   analysisHistory.unshift(item);
   
-  // Keep only last 10 items
-  if (analysisHistory.length > 10) {
-    analysisHistory = analysisHistory.slice(0, 10);
+  // Keep only last 50 items in memory
+  if (analysisHistory.length > 50) {
+    analysisHistory = analysisHistory.slice(0, 50);
   }
+  
+  // Save to localStorage
+  StorageManager.addToHistory({
+    text: item.text,
+    credibility: item.credibility,
+    claims: item.claims,
+    timestamp: item.timestamp.toISOString(),
+    fullData: item.fullData,
+    inputText: item.inputText
+  });
+  
+  // Cache the analysis result
+  StorageManager.cacheAnalysisResult(inputText, result);
   
   renderHistory();
 }
@@ -472,12 +780,31 @@ function renderHistory() {
 }
 
 function loadHistoryItem(id) {
-  const item = analysisHistory.find(i => i.id === id);
-  if (!item) return;
+  // Try to get from storage first
+  const savedItem = StorageManager.getHistoryItem(id);
   
-  elements.inputText.value = item.text;
-  updateCharCount();
-  showToast('History item loaded', '📜');
+  if (savedItem) {
+    // Use cached full data if available
+    if (savedItem.fullData && savedItem.inputText) {
+      elements.inputText.value = savedItem.inputText;
+      updateCharCount();
+      displayResults(savedItem.fullData);
+      showToast(I18N.t('toast.historyLoaded'), '📜');
+    } else {
+      // Fallback to old format
+      elements.inputText.value = savedItem.text;
+      updateCharCount();
+      showToast(I18N.t('toast.historyLoaded'), '📜');
+    }
+  } else {
+    // Try in-memory history
+    const item = analysisHistory.find(i => i.id === id);
+    if (!item) return;
+    
+    elements.inputText.value = item.text;
+    updateCharCount();
+    showToast(I18N.t('toast.historyLoaded'), '📜');
+  }
   
   // Scroll to top
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -557,13 +884,15 @@ function formatSourceType(type) {
 }
 
 function formatTime(date) {
+  // Ensure date is a Date object
+  const dateObj = date instanceof Date ? date : new Date(date);
   const now = new Date();
-  const diff = Math.floor((now - date) / 1000); // seconds
+  const diff = Math.floor((now - dateObj) / 1000); // seconds
   
   if (diff < 60) return 'Just now';
   if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
   if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-  return date.toLocaleDateString();
+  return dateObj.toLocaleDateString();
 }
 
 function showLoading() {
@@ -646,7 +975,7 @@ function exportReport() {
   a.click();
   URL.revokeObjectURL(url);
   
-  showToast('Report exported!', '📄');
+  showToast(I18N.t('toast.reportExported'), '📄');
 }
 
 function generateReportText() {
@@ -745,6 +1074,85 @@ function generateReportText() {
   return report;
 }
 
+// ===== HELPER FUNCTIONS =====
+
+// Animate value counting up
+function animateValue(element, start, end, duration = 1000, suffix = '') {
+  const range = end - start;
+  const increment = range / (duration / 16);
+  let current = start;
+  
+  const timer = setInterval(() => {
+    current += increment;
+    if (current >= end) {
+      current = end;
+      clearInterval(timer);
+    }
+    element.textContent = Math.floor(current) + suffix;
+  }, 16);
+}
+
+// Add text-to-speech buttons to claims
+function addTextToSpeechButtons() {
+  const claimCards = document.querySelectorAll('.claim-card');
+  
+  claimCards.forEach((card, index) => {
+    // Check if button already exists
+    if (card.querySelector('.speak-btn')) return;
+    
+    const header = card.querySelector('.claim-header');
+    if (!header) return;
+    
+    // Create speak button
+    const speakBtn = document.createElement('button');
+    speakBtn.className = 'speak-claim-btn';
+    speakBtn.innerHTML = '🔊';
+    speakBtn.style.cssText = `
+      padding: 6px 12px;
+      background: rgba(37,99,235,0.1);
+      border: 1px solid rgba(37,99,235,0.3);
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1rem;
+      margin-left: auto;
+      transition: all 0.3s;
+    `;
+    
+    speakBtn.onmouseover = () => {
+      speakBtn.style.background = 'rgba(37,99,235,0.2)';
+      speakBtn.style.transform = 'scale(1.05)';
+    };
+    
+    speakBtn.onmouseout = () => {
+      speakBtn.style.background = 'rgba(37,99,235,0.1)';
+      speakBtn.style.transform = '';
+    };
+    
+    speakBtn.onclick = (e) => {
+      e.stopPropagation();
+      
+      // Get claim text
+      const claimText = currentAnalysis.claims[index].claim;
+      const explanation = currentAnalysis.claims[index].explanation || '';
+      const verdict = currentAnalysis.claims[index].verdict;
+      
+      // Build speech text
+      const lang = localStorage.getItem('veritasai_language') || 'en';
+      const t = I18N.translations[lang] || I18N.translations.en;
+      
+      let speechText = `${claimText}. `;
+      speechText += `${t.verdicts[verdict] || verdict}. `;
+      if (explanation) {
+        speechText += `${explanation.substring(0, 200)}`;
+      }
+      
+      TextToSpeech.speakText(speechText);
+    };
+    
+    header.appendChild(speakBtn);
+  });
+}
+
 // ===== NEW ANALYSIS =====
 function newAnalysis() {
   elements.inputText.value = '';
@@ -752,5 +1160,5 @@ function newAnalysis() {
   hideResults();
   hideError();
   window.scrollTo({ top: 0, behavior: 'smooth' });
-  showToast('Ready for new analysis', '🔄');
+  showToast(I18N.t('toast.readyForNew'), '🔄');
 }

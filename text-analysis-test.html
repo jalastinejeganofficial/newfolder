@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Text Analysis Test - VeritasAI</title>
+  <style>
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: #020208;
+      color: #e8f0ff;
+      padding: 40px 20px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    h1 {
+      color: #4f46e5;
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    .test-box {
+      background: rgba(79, 70, 229, 0.1);
+      border: 1px solid rgba(79, 70, 229, 0.3);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+    textarea {
+      width: 100%;
+      min-height: 150px;
+      background: rgba(10, 12, 40, 0.8);
+      border: 1px solid rgba(79, 70, 229, 0.3);
+      border-radius: 8px;
+      color: #e8f0ff;
+      padding: 16px;
+      font-size: 1rem;
+      font-family: inherit;
+      resize: vertical;
+    }
+    textarea:focus {
+      outline: none;
+      border-color: #4f46e5;
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+    }
+    button {
+      background: linear-gradient(135deg, #4f46e5, #0ea5e9);
+      color: white;
+      border: none;
+      padding: 14px 32px;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-top: 16px;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+    }
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(79, 70, 229, 0.4);
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .results {
+      background: rgba(10, 12, 40, 0.9);
+      border-radius: 8px;
+      padding: 20px;
+      margin-top: 24px;
+      font-size: 0.9rem;
+      line-height: 1.6;
+      max-height: 500px;
+      overflow-y: auto;
+    }
+    .claim-card {
+      background: rgba(79, 70, 229, 0.1);
+      border-left: 4px solid #4f46e5;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .verdict-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    .verdict-true { background: #10b981; color: white; }
+    .verdict-false { background: #ef4444; color: white; }
+    .verdict-misleading { background: #f59e0b; color: white; }
+    .verdict-unverifiable { background: #6366f1; color: white; }
+    .loading {
+      text-align: center;
+      padding: 40px;
+    }
+    .spinner {
+      border: 3px solid rgba(79, 70, 229, 0.2);
+      border-top-color: #4f46e5;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 16px;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .error {
+      background: rgba(239, 68, 68, 0.1);
+      border-left: 4px solid #ef4444;
+      color: #fca5a5;
+      padding: 16px;
+      border-radius: 8px;
+      margin-top: 16px;
+    }
+    .success {
+      background: rgba(16, 185, 129, 0.1);
+      border-left: 4px solid #10b981;
+      color: #6ee7b7;
+      padding: 16px;
+      border-radius: 8px;
+      margin-top: 16px;
+    }
+    .log-output {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      background: #000;
+      padding: 16px;
+      border-radius: 8px;
+      margin-top: 16px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    .log-entry {
+      margin-bottom: 8px;
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🧪 Text Analysis Test Tool</h1>
+  
+  <div class="test-box">
+    <h3>Test Input</h3>
+    <textarea id="testInput" placeholder="Type or paste text to analyze..."></textarea>
+    <div style="margin-top: 12px; font-size: 0.875rem; opacity: 0.7;">
+      Minimum 10 characters required
+    </div>
+    <button onclick="runTest()" id="testBtn">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/>
+        <path d="M21 21l-4.35-4.35"/>
+      </svg>
+      Run Analysis Test
+    </button>
+  </div>
+  
+  <div id="output"></div>
+  
+  <div class="test-box">
+    <h3>Debug Console</h3>
+    <div class="log-output" id="logs"></div>
+  </div>
+
+  <script>
+    const CONFIG = {
+      API_KEY: "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",
+      API_URL: "https://openrouter.ai/api/v1/chat/completions",
+      MODEL: "meta-llama/llama-3-8b-instruct",
+      SYSTEM_PROMPT: `You are VeritasAI, an expert fact-checking assistant. Analyze the text and return JSON with this structure:
+{
+  "claims": [
+    {
+      "claim": "extracted claim",
+      "verdict": "TRUE|MISLEADING|FALSE|UNVERIFIABLE",
+      "confidence": 0-100,
+      "explanation": "detailed explanation",
+      "evidence_sources": [{"title": "Source", "url": "https://..."}]
+    }
+  ],
+  "overall_credibility": 0-100,
+  "summary": "brief summary"
+}`
+    };
+
+    function log(message, type = 'info') {
+      const logs = document.getElementById('logs');
+      const entry = document.createElement('div');
+      entry.className = `log-entry`;
+      const timestamp = new Date().toLocaleTimeString();
+      
+      const colors = {
+        info: '#3b82f6',
+        success: '#10b981',
+        error: '#ef4444',
+        warn: '#f59e0b'
+      };
+      
+      entry.style.color = colors[type] || colors.info;
+      entry.textContent = `[${timestamp}] ${message}`;
+      logs.appendChild(entry);
+      logs.scrollTop = logs.scrollHeight;
+    }
+
+    async function runTest() {
+      const input = document.getElementById('testInput');
+      const btn = document.getElementById('testBtn');
+      const output = document.getElementById('output');
+      
+      const text = input.value.trim();
+      
+      // Validation
+      if (!text) {
+        log('❌ Error: Please enter some text', 'error');
+        output.innerHTML = '<div class="error">Please enter text to analyze</div>';
+        return;
+      }
+      
+      if (text.length < 10) {
+        log(`❌ Error: Text too short (${text.length} chars, need 10+)`, 'error');
+        output.innerHTML = '<div class="error">Text must be at least 10 characters</div>';
+        return;
+      }
+      
+      // Start test
+      log('✅ Starting analysis test...', 'info');
+      log(`📝 Input text length: ${text.length}`, 'info');
+      
+      btn.disabled = true;
+      btn.innerHTML = '⏳ Testing...';
+      output.innerHTML = '<div class="loading"><div class="spinner"></div>Analyzing...</div>';
+      
+      const startTime = Date.now();
+      
+      try {
+        log(`🚀 Sending request to ${CONFIG.API_URL}`, 'info');
+        log(`🤖 Using model: ${CONFIG.MODEL}`, 'info');
+        
+        const response = await fetch(CONFIG.API_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${CONFIG.API_KEY}`,
+            'HTTP-Referer': 'https://veritasai.hackathon',
+            'X-Title': 'VeritasAI Test'
+          },
+          body: JSON.stringify({
+            model: CONFIG.MODEL,
+            messages: [
+              { role: 'system', content: CONFIG.SYSTEM_PROMPT },
+              { role: 'user', content: text }
+            ],
+            temperature: 0.3,
+            max_tokens: 3000
+          })
+        });
+        
+        const duration = Date.now() - startTime;
+        log(`📡 Response received in ${duration}ms (Status: ${response.status})`, 
+          response.ok ? 'success' : 'error');
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error?.message || `HTTP ${response.status}`);
+        }
+        
+        const data = await response.json();
+        log('✅ API response parsed successfully', 'success');
+        
+        if (!data.choices || !data.choices[0]?.message?.content) {
+          throw new Error('Invalid API response structure');
+        }
+        
+        // Parse result
+        const content = data.choices[0].message.content;
+        log(`📄 Response length: ${content.length} characters`, 'info');
+        
+        try {
+          const result = JSON.parse(content);
+          log('✅ JSON parsing successful', 'success');
+          
+          // Display results
+          displayResults(result);
+          log('✅ Results displayed', 'success');
+          
+        } catch (parseError) {
+          log(`❌ JSON parse failed: ${parseError.message}`, 'error');
+          throw new Error('Failed to parse AI response');
+        }
+        
+      } catch (error) {
+        log(`❌ Test failed: ${error.message}`, 'error');
+        output.innerHTML = `<div class="error">
+          <strong>Analysis Failed</strong><br>
+          ${error.message}
+        </div>`;
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/>
+            <path d="M21 21l-4.35-4.35"/>
+          </svg>
+          Run Analysis Test
+        `;
+      }
+    }
+
+    function displayResults(result) {
+      const output = document.getElementById('output');
+      
+      let html = '<div class="results">';
+      
+      // Overall credibility
+      const credibilityColor = result.overall_credibility >= 70 ? '#10b981' :
+                               result.overall_credibility >= 40 ? '#f59e0b' : '#ef4444';
+      
+      html += `
+        <div style="text-align: center; margin-bottom: 24px;">
+          <div style="font-size: 2rem; font-weight: 700; color: ${credibilityColor};">
+            ${result.overall_credibility}%
+          </div>
+          <div style="opacity: 0.7; margin-top: 8px;">Overall Credibility</div>
+        </div>
+      `;
+      
+      // Claims
+      if (result.claims && Array.isArray(result.claims)) {
+        html += `<div style="margin-bottom: 16px; font-weight: 600;">
+          📋 ${result.claims.length} Claim${result.claims.length !== 1 ? 's' : ''} Analyzed
+        </div>`;
+        
+        result.claims.forEach((claim, index) => {
+          const verdictClass = `verdict-${claim.verdict.toLowerCase().replace(' ', '-')}`;
+          const verdictLabel = claim.verdict === 'TRUE' ? '✓ Accurate' :
+                              claim.verdict === 'FALSE' ? '✗ False' :
+                              claim.verdict === 'MISLEADING' ? '⚠ Misleading' : '? Unverifiable';
+          
+          html += `
+            <div class="claim-card">
+              <div class="verdict-badge ${verdictClass}">${verdictLabel}</div>
+              <div style="font-weight: 600; margin-bottom: 8px;">
+                Claim ${index + 1}: ${escapeHtml(claim.claim)}
+              </div>
+              <div style="margin-bottom: 12px; opacity: 0.8;">
+                <strong>Confidence:</strong> ${claim.confidence}%
+              </div>
+              <div style="margin-bottom: 12px;">
+                <strong>Explanation:</strong><br>
+                ${escapeHtml(claim.explanation || 'No explanation provided')}
+              </div>
+              ${claim.evidence_sources && claim.evidence_sources.length > 0 ? `
+                <div style="font-size: 0.85rem; opacity: 0.7;">
+                  <strong>Sources:</strong>
+                  <ul style="margin: 8px 0 0 20px; padding: 0;">
+                    ${claim.evidence_sources.map(s => `
+                      <li>${escapeHtml(s.title)}${s.url ? ` (<a href="${s.url}" target="_blank" style="color: #4f46e5;">link</a>)` : ''}</li>
+                    `).join('')}
+                  </ul>
+                </div>
+              ` : ''}
+            </div>
+          `;
+        });
+      }
+      
+      // Summary
+      if (result.summary) {
+        html += `
+          <div style="margin-top: 24px; padding: 16px; background: rgba(79, 70, 229, 0.1); border-radius: 8px;">
+            <strong>Summary:</strong><br>
+            ${escapeHtml(result.summary)}
+          </div>
+        `;
+      }
+      
+      html += '</div>';
+      output.innerHTML = html;
+      
+      // Success message
+      output.innerHTML += `
+        <div class="success">
+          ✅ Analysis completed successfully!<br>
+          Processed ${result.claims?.length || 0} claims in ${(Date.now() - startTime)/1000}s
+        </div>
+      `;
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // Initialize
+    window.addEventListener('DOMContentLoaded', () => {
+      log('Test tool loaded', 'success');
+      log('Ready to analyze text', 'info');
+      
+      // Pre-fill with sample
+      document.getElementById('testInput').value = 
+        "The moon landing was faked in 1969 and NASA employees hid the truth.";
+      
+      log('Sample text loaded', 'info');
+    });
+  </script>
+</body>
+</html>

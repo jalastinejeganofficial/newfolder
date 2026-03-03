@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Model Verification - VeritasAI</title>
+  <style>
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: #020208;
+      color: #e8f0ff;
+      padding: 40px 20px;
+      line-height: 1.6;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    h1 {
+      color: #4f46e5;
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    .test-section {
+      background: rgba(79, 70, 229, 0.1);
+      border: 1px solid rgba(79, 70, 229, 0.3);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+    .test-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px;
+      background: rgba(10, 12, 40, 0.6);
+      border-radius: 8px;
+      margin-bottom: 12px;
+      border-left: 4px solid #6b7280;
+    }
+    .test-item.testing {
+      border-left-color: #f59e0b;
+      animation: pulse 1s infinite;
+    }
+    .test-item.success {
+      border-left-color: #10b981;
+    }
+    .test-item.error {
+      border-left-color: #ef4444;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+    .status {
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.875rem;
+    }
+    .status.pending {
+      background: #6b7280;
+      color: white;
+    }
+    .status.testing {
+      background: #f59e0b;
+      color: white;
+    }
+    .status.success {
+      background: #10b981;
+      color: white;
+    }
+    .status.error {
+      background: #ef4444;
+      color: white;
+    }
+    button {
+      background: linear-gradient(135deg, #4f46e5, #0ea5e9);
+      color: white;
+      border: none;
+      padding: 14px 32px;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      display: block;
+      margin: 40px auto;
+    }
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(79, 70, 229, 0.4);
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .results {
+      background: rgba(10, 12, 40, 0.8);
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: 24px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.875rem;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    .log-entry {
+      margin-bottom: 8px;
+      padding: 8px;
+      border-radius: 4px;
+    }
+    .log-info { color: #3b82f6; }
+    .log-success { color: #10b981; }
+    .log-error { color: #ef4444; }
+    .log-warn { color: #f59e0b; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔍 Model Verification Tool</h1>
+    
+    <div class="test-section">
+      <h2>Vision Models (Image Analysis)</h2>
+      <div id="vision-models"></div>
+    </div>
+    
+    <div class="test-section">
+      <h2>Text Models (Content Analysis)</h2>
+      <div id="text-models"></div>
+    </div>
+    
+    <button onclick="runAllTests()" id="runBtn">Run All Tests</button>
+    
+    <div class="test-section">
+      <h2>Test Results Log</h2>
+      <div class="results" id="results"></div>
+    </div>
+  </div>
+
+  <script>
+    const CONFIG = {
+      API_KEY: "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",
+      API_URL: "https://openrouter.ai/api/v1/chat/completions",
+      VISION_MODELS: [
+        "meta-llama/llama-3.2-11b-vision-instruct",
+        "meta-llama/llama-3.2-90b-vision-instruct",
+        "google/gemma-2-9b-it"
+      ],
+      MODELS: [
+        "meta-llama/llama-3-8b-instruct",
+        "meta-llama/llama-3.1-8b-instruct",
+        "mistralai/mistral-7b-instruct"
+      ]
+    };
+
+    function log(message, type = 'info') {
+      const results = document.getElementById('results');
+      const entry = document.createElement('div');
+      entry.className = `log-entry log-${type}`;
+      const timestamp = new Date().toLocaleTimeString();
+      entry.textContent = `[${timestamp}] ${message}`;
+      results.appendChild(entry);
+      results.scrollTop = results.scrollHeight;
+    }
+
+    function createTestItem(modelName, containerId) {
+      const container = document.getElementById(containerId);
+      const item = document.createElement('div');
+      item.className = 'test-item';
+      item.id = `test-${modelName.replace(/\//g, '-')}`;
+      item.innerHTML = `
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.875rem;">${modelName}</span>
+        <span class="status pending">Pending</span>
+      `;
+      container.appendChild(item);
+      return item;
+    }
+
+    function updateStatus(item, status, message = '') {
+      const statusEl = item.querySelector('.status');
+      statusEl.className = `status ${status}`;
+      statusEl.textContent = status === 'success' ? '✅ Working' : 
+                             status === 'error' ? '❌ Failed' : 
+                             status === 'testing' ? '⏳ Testing' : 'Pending';
+      if (message && status === 'error') {
+        item.title = message;
+      }
+    }
+
+    async function testModel(model, isVision = false) {
+      const itemId = `test-${model.replace(/\//g, '-')}`;
+      const item = document.getElementById(itemId);
+      
+      try {
+        updateStatus(item, 'testing');
+        log(`Testing ${model}...`, 'info');
+        
+        const payload = {
+          model: model,
+          messages: isVision ? [
+            {
+              role: 'user',
+              content: [
+                {
+                  type: 'text',
+                  text: 'Describe this image briefly.'
+                },
+                {
+                  type: 'image_url',
+                  image_url: {
+                    url: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='
+                  }
+                }
+              ]
+            }
+          ] : [
+            {
+              role: 'user',
+              content: 'Respond with just the word "OK" to confirm you are working.'
+            }
+          ],
+          temperature: 0.3,
+          max_tokens: 50
+        };
+
+        const startTime = Date.now();
+        const response = await fetch(CONFIG.API_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${CONFIG.API_KEY}`,
+            'HTTP-Referer': 'https://veritasai.hackathon',
+            'X-Title': 'VeritasAI Model Test'
+          },
+          body: JSON.stringify(payload)
+        });
+        
+        const duration = Date.now() - startTime;
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error?.message || `HTTP ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.choices && data.choices.length > 0) {
+          updateStatus(item, 'success');
+          log(`✅ ${model} - SUCCESS (${duration}ms)`, 'success');
+          return true;
+        } else {
+          throw new Error('Invalid response format');
+        }
+        
+      } catch (error) {
+        updateStatus(item, 'error', error.message);
+        log(`❌ ${model} - FAILED: ${error.message}`, 'error');
+        return false;
+      }
+    }
+
+    async function runAllTests() {
+      const btn = document.getElementById('runBtn');
+      btn.disabled = true;
+      btn.textContent = 'Running Tests...';
+      
+      document.getElementById('results').innerHTML = '';
+      
+      log('Starting model verification...', 'info');
+      
+      // Test Vision Models
+      log('\n=== Testing Vision Models ===', 'info');
+      for (const model of CONFIG.VISION_MODELS) {
+        await testModel(model, true);
+      }
+      
+      // Test Text Models
+      log('\n=== Testing Text Models ===', 'info');
+      for (const model of CONFIG.MODELS) {
+        await testModel(model, false);
+      }
+      
+      log('\n✓ All tests completed!', 'success');
+      
+      btn.disabled = false;
+      btn.textContent = 'Run All Tests Again';
+    }
+
+    // Initialize on page load
+    window.addEventListener('DOMContentLoaded', () => {
+      // Create test items for vision models
+      CONFIG.VISION_MODELS.forEach(model => {
+        createTestItem(model, 'vision-models');
+      });
+      
+      // Create test items for text models
+      CONFIG.MODELS.forEach(model => {
+        createTestItem(model, 'text-models');
+      });
+      
+      log('Model Verification Tool loaded', 'info');
+      log('Click "Run All Tests" to verify all models', 'info');
+    });
+  </script>
+</body>
+</html>

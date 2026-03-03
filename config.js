@@ -1,19 +1,29 @@
 // VeritasAI — Configuration
 const CONFIG = {
-  API_KEY: "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",
+  API_KEY: "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",
   API_URL: "https://openrouter.ai/api/v1/chat/completions",
   MODEL: "meta-llama/llama-3-8b-instruct", // Updated to working endpoint
+  VISION_MODEL: "meta-llama/llama-3.2-11b-vision-instruct", // Working vision model with fallbacks
+  VISION_MODELS: [ // Fallback list for image analysis - verified working models with vision support
+    "meta-llama/llama-3.2-11b-vision-instruct",  // Primary vision model
+    "openai/gpt-4o-mini"  // Alternative with vision support
+  ],
+  MODELS: [ // Text analysis models with fallbacks
+    "meta-llama/llama-3-8b-instruct",
+    "meta-llama/llama-3.1-8b-instruct",
+    "mistralai/mistral-7b-instruct"
+  ],
   SITE_URL: "https://veritasai.hackathon",
   SITE_NAME: "VeritasAI",
 
-  VERDICT_CONFIG: {
-    TRUE:        { label: "Accurate/True",     icon: "✓", color: "#22c55e", glow: "rgba(34,197,94,0.3)"  },
-    MISLEADING:  { label: "Partially Misleading", icon: "⚠", color: "#f59e0b", glow: "rgba(245,158,11,0.3)" },
-    FALSE:       { label: "False",             icon: "✗", color: "#ef4444", glow: "rgba(239,68,68,0.3)"  },
-    UNVERIFIABLE:{ label: "Unverifiable",      icon: "?", color: "#6366f1", glow: "rgba(99,102,241,0.3)" },
-  },
+   VERDICT_CONFIG: {
+      TRUE: { label: "Accurate/True", icon: "✓", color: "#22c55e", glow: "rgba(34,197,94,0.3)" },
+      MISLEADING: { label: "Partially Misleading", icon: "⚠", color: "#f59e0b", glow: "rgba(245,158,11,0.3)" },
+      FALSE: { label: "False", icon: "✗", color: "#ef4444", glow: "rgba(239,68,68,0.3)" },
+      UNVERIFIABLE: { label: "Unverifiable", icon: "?", color: "#6366f1", glow: "rgba(99,102,241,0.3)" },
+   },
 
-  SYSTEM_PROMPT: `You are VeritasAI, an expert fact-checking and misinformation analysis system with advanced evidence-based reasoning capabilities.
+   SYSTEM_PROMPT: `You are VeritasAI, an expert fact-checking and misinformation analysis system with advanced evidence-based reasoning capabilities.
 
 Your task: Analyze the provided text, extract all discrete factual claims, and evaluate each one rigorously using structured reasoning and credible evidence.
 

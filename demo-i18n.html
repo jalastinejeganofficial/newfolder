@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VeritasAI - Multi-Language & Storage Demo</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      max-width: 1000px;
+      margin: 40px auto;
+      padding: 20px;
+      background: linear-gradient(135deg, #05050f 0%, #0a0a1e 100%);
+      color: #f0f0ff;
+    }
+    h1 { 
+      color: #7c3aed; 
+      text-align: center;
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+    }
+    .subtitle {
+      text-align: center;
+      color: #7070a0;
+      font-size: 1.1rem;
+      margin-bottom: 40px;
+    }
+    .demo-section {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 24px;
+      margin: 24px 0;
+    }
+    .section-title {
+      font-size: 1.5rem;
+      color: #a78bfa;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .language-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin: 20px 0;
+    }
+    .language-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-align: center;
+    }
+    .language-card:hover {
+      border-color: rgba(124,58,237,0.5);
+      background: rgba(124,58,237,0.1);
+      transform: translateY(-2px);
+    }
+    .language-card.active {
+      border-color: #7c3aed;
+      background: rgba(124,58,237,0.15);
+      box-shadow: 0 0 20px rgba(124,58,237,0.3);
+    }
+    .lang-code {
+      font-size: 0.75rem;
+      color: #7070a0;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+    .lang-name {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #f0f0ff;
+    }
+    .confidence-demo {
+      margin: 20px 0;
+    }
+    .confidence-bar-container {
+      margin: 15px 0;
+    }
+    .confidence-bar-track {
+      height: 24px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 12px;
+      overflow: hidden;
+      position: relative;
+    }
+    .confidence-bar-fill {
+      height: 100%;
+      border-radius: 12px;
+      transition: width 1s ease;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding-right: 10px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: white;
+    }
+    .storage-info {
+      background: rgba(0,0,0,0.3);
+      border-radius: 12px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .info-row:last-child {
+      border-bottom: none;
+    }
+    .info-label {
+      color: #7070a0;
+    }
+    .info-value {
+      color: #a78bfa;
+      font-weight: 600;
+    }
+    button {
+      background: linear-gradient(135deg, #7c3aed, #2563eb);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      margin: 10px 5px;
+      transition: all 0.3s;
+    }
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(124,58,237,0.4);
+    }
+    button.secondary {
+      background: transparent;
+      border: 1px solid var(--border);
+    }
+    .toast {
+      position: fixed;
+      bottom: 32px;
+      right: 32px;
+      background: rgba(22,22,45,0.95);
+      border: 1px solid rgba(124,58,237,0.4);
+      border-radius: 12px;
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      backdrop-filter: blur(20px);
+      transform: translateY(80px);
+      opacity: 0;
+      transition: all 0.4s;
+      z-index: 9999;
+    }
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+    code {
+      background: rgba(255,255,255,0.05);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-family: 'JetBrains Mono', monospace;
+      color: #a78bfa;
+    }
+  </style>
+</head>
+<body>
+  <h1>🌍 VeritasAI - Multi-Language & Storage Demo</h1>
+  <div class="subtitle">Test internationalization and localStorage features</div>
+
+  <!-- Language Selection -->
+  <div class="demo-section">
+    <div class="section-title">
+      <span>🌐</span>
+      <span>Select Language / भाषा चुनें / மொழியைத் தேர்ந்தெடுக்கவும்</span>
+    </div>
+    <div class="language-grid">
+      <div class="language-card active" onclick="setLanguage('en')" data-lang="en">
+        <div class="lang-code">EN</div>
+        <div class="lang-name">English</div>
+      </div>
+      <div class="language-card" onclick="setLanguage('ta')" data-lang="ta">
+        <div class="lang-code">TA</div>
+        <div class="lang-name">தமிழ்</div>
+      </div>
+      <div class="language-card" onclick="setLanguage('hi')" data-lang="hi">
+        <div class="lang-code">HI</div>
+        <div class="lang-name">हिन्दी</div>
+      </div>
+      <div class="language-card" onclick="setLanguage('te')" data-lang="te">
+        <div class="lang-code">TE</div>
+        <div class="lang-name">తెలుగు</div>
+      </div>
+      <div class="language-card" onclick="setLanguage('ja')" data-lang="ja">
+        <div class="lang-code">JA</div>
+        <div class="lang-name">日本語</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confidence Levels Demo -->
+  <div class="demo-section">
+    <div class="section-title">
+      <span>⚡</span>
+      <span>Confidence Levels by Language</span>
+    </div>
+    
+    <div class="confidence-demo">
+      <div class="confidence-bar-container">
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+          <span id="label-95">Very High Confidence (95%)</span>
+          <span style="color:#22c55e;font-weight:700;">95%</span>
+        </div>
+        <div class="confidence-bar-track">
+          <div class="confidence-bar-fill" style="width:95%;background:#22c55e;" id="bar-95">95%</div>
+        </div>
+        <div id="desc-95" style="font-size:0.85rem;color:#7070a0;margin-top:8px;"></div>
+      </div>
+
+      <div class="confidence-bar-container">
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+          <span id="label-75">High Confidence (75%)</span>
+          <span style="color:#4ade80;font-weight:700;">75%</span>
+        </div>
+        <div class="confidence-bar-track">
+          <div class="confidence-bar-fill" style="width:75%;background:#4ade80;" id="bar-75">75%</div>
+        </div>
+        <div id="desc-75" style="font-size:0.85rem;color:#7070a0;margin-top:8px;"></div>
+      </div>
+
+      <div class="confidence-bar-container">
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+          <span id="label-55">Moderate Confidence (55%)</span>
+          <span style="color:#f59e0b;font-weight:700;">55%</span>
+        </div>
+        <div class="confidence-bar-track">
+          <div class="confidence-bar-fill" style="width:55%;background:#f59e0b;" id="bar-55">55%</div>
+        </div>
+        <div id="desc-55" style="font-size:0.85rem;color:#7070a0;margin-top:8px;"></div>
+      </div>
+
+      <div class="confidence-bar-container">
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+          <span id="label-35">Low Confidence (35%)</span>
+          <span style="color:#fb923c;font-weight:700;">35%</span>
+        </div>
+        <div class="confidence-bar-track">
+          <div class="confidence-bar-fill" style="width:35%;background:#fb923c;" id="bar-35">35%</div>
+        </div>
+        <div id="desc-35" style="font-size:0.85rem;color:#7070a0;margin-top:8px;"></div>
+      </div>
+
+      <div class="confidence-bar-container">
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+          <span id="label-15">Very Low Confidence (15%)</span>
+          <span style="color:#ef4444;font-weight:700;">15%</span>
+        </div>
+        <div class="confidence-bar-track">
+          <div class="confidence-bar-fill" style="width:15%;background:#ef4444;" id="bar-15">15%</div>
+        </div>
+        <div id="desc-15" style="font-size:0.85rem;color:#7070a0;margin-top:8px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Storage Info -->
+  <div class="demo-section">
+    <div class="section-title">
+      <span>💾</span>
+      <span>localStorage Status</span>
+    </div>
+    <div class="storage-info">
+      <div class="info-row">
+        <span class="info-label">Storage Available:</span>
+        <span class="info-value" id="storage-available">Checking...</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Current Usage:</span>
+        <span class="info-value" id="storage-usage">Calculating...</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Saved Language:</span>
+        <span class="info-value" id="saved-language">-</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">History Items:</span>
+        <span class="info-value" id="history-count">0</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Cache Entries:</span>
+        <span class="info-value" id="cache-count">0</span>
+      </div>
+    </div>
+    <div style="margin-top:20px;">
+      <button onclick="exportData()">📥 Export All Data</button>
+      <button class="secondary" onclick="clearAllData()">🗑️ Clear All Data</button>
+      <button class="secondary" onclick="refreshStats()">🔄 Refresh Stats</button>
+    </div>
+  </div>
+
+  <!-- Translation Examples -->
+  <div class="demo-section">
+    <div class="section-title">
+      <span>📝</span>
+      <span>UI Translations Preview</span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px;">
+      <div style="background:rgba(0,0,0,0.3);padding:16px;border-radius:8px;">
+        <div style="font-size:0.75rem;color:#7070a0;margin-bottom:8px;">NAV.ANALYZE</div>
+        <div id="trans-analyze" style="font-size:1.1rem;font-weight:600;">Analyze</div>
+      </div>
+      <div style="background:rgba(0,0,0,0.3);padding:16px;border-radius:8px;">
+        <div style="font-size:0.75rem;color:#7070a0;margin-bottom:8px;">CONFIDENCE.VERY_HIGH</div>
+        <div id="trans-vhigh" style="font-size:1.1rem;font-weight:600;">Very High Confidence</div>
+      </div>
+      <div style="background:rgba(0,0,0,0.3);padding:16px;border-radius:8px;">
+        <div style="font-size:0.75rem;color:#7070a0;margin-bottom:8px;">VERDICTS.ACCURATE_TRUE</div>
+        <div id="trans-true" style="font-size:1.1rem;font-weight:600;">Accurate/True</div>
+      </div>
+      <div style="background:rgba(0,0,0,0.3);padding:16px;border-radius:8px;">
+        <div style="font-size:0.75rem;color:#7070a0;margin-bottom:8px;">TOAST.ANALYSIS_COMPLETE</div>
+        <div id="trans-complete" style="font-size:1.1rem;font-weight:600;">Analysis complete!</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="toast" id="toast">
+    <span id="toast-icon">✅</span>
+    <span id="toast-msg">Done!</span>
+  </div>
+
+  <script src="storage.js"></script>
+  <script src="i18n.js"></script>
+  <script>
+    // Initialize
+    function init() {
+      updateLanguageCards();
+      updateConfidenceLevels();
+      updateStorageStats();
+      updateTranslations();
+      
+      // Listen for language changes
+      window.addEventListener('languageChanged', () => {
+        updateConfidenceLevels();
+        updateTranslations();
+        updateLanguageCards();
+      });
+    }
+
+    function setLanguage(lang) {
+      I18N.setLanguage(lang);
+      StorageManager.saveLanguage(lang);
+      updateLanguageCards();
+      updateConfidenceLevels();
+      updateTranslations();
+      showToast(I18N.t('toast.done'), '🌍');
+      updateStorageStats();
+    }
+
+    function updateLanguageCards() {
+      document.querySelectorAll('.language-card').forEach(card => {
+        const lang = card.getAttribute('data-lang');
+        if (lang === I18N.currentLanguage) {
+          card.classList.add('active');
+        } else {
+          card.classList.remove('active');
+        }
+      });
+    }
+
+    function updateConfidenceLevels() {
+      const levels = [95, 75, 55, 35, 15];
+      
+      levels.forEach(level => {
+        const labelEl = document.getElementById(`label-${level}`);
+        const descEl = document.getElementById(`desc-${level}`);
+        
+        if (labelEl) {
+          labelEl.textContent = `${I18N.getConfidenceLevel(level)} (${level}%)`;
+        }
+        if (descEl) {
+          descEl.textContent = I18N.getConfidenceDescription(level);
+        }
+      });
+    }
+
+    function updateTranslations() {
+      document.getElementById('trans-analyze').textContent = I18N.t('nav.analyze');
+      document.getElementById('trans-vhigh').textContent = I18N.t('confidence.veryHigh');
+      document.getElementById('trans-true').textContent = I18N.t('verdicts.accurateTrue');
+      document.getElementById('trans-complete').textContent = I18N.t('toast.analysisComplete');
+    }
+
+    function updateStorageStats() {
+      const available = StorageManager.isAvailable();
+      document.getElementById('storage-available').textContent = available ? '✓ Yes' : '✗ No';
+      document.getElementById('storage-available').style.color = available ? '#22c55e' : '#ef4444';
+
+      const usage = StorageManager.getStorageUsage();
+      document.getElementById('storage-usage').textContent = `${usage.kb} KB (${usage.mb} MB)`;
+
+      const savedLang = StorageManager.getLanguage();
+      document.getElementById('saved-language').textContent = `${savedLang} (${I18N.getLanguageName(savedLang)})`;
+
+      const history = StorageManager.getHistory();
+      document.getElementById('history-count').textContent = history.length;
+
+      // Count cache entries
+      let cacheCount = 0;
+      for (let i = 0; i < localStorage.length; i++) {
+        if (localStorage.key(i).startsWith('veritasai_cache:')) {
+          cacheCount++;
+        }
+      }
+      document.getElementById('cache-count').textContent = cacheCount;
+    }
+
+    function refreshStats() {
+      updateStorageStats();
+      showToast('Stats refreshed', '🔄');
+    }
+
+    function exportData() {
+      const data = StorageManager.exportAllData();
+      const blob = new Blob([data], {type: 'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `veritasai-backup-${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('Data exported!', '📥');
+    }
+
+    function clearAllData() {
+      if (confirm('Are you sure you want to clear all stored data? This cannot be undone.')) {
+        StorageManager.clearAllData();
+        showToast('All data cleared', '🗑️');
+        updateStorageStats();
+      }
+    }
+
+    function showToast(message, icon = '✅') {
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toast-msg');
+      const toastIcon = document.getElementById('toast-icon');
+      
+      toastMsg.textContent = message;
+      toastIcon.textContent = icon;
+      toast.classList.add('show');
+      
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3000);
+    }
+
+    // Auto-initialize on load
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  </script>
+</body>
+</html>
