@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VeritasAI — Real-Time Misinformation Analysis</title>
+  <meta name="description" content="AI-powered real-time misinformation detection, analysis, and correction platform. Detect false, misleading, or unverifiable claims with confidence scoring and transparent reasoning."/>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div id="app">
+
+  <!-- NAV -->
+  <nav class="nav">
+    <div class="nav-logo">
+      <div class="nav-logo-icon">🔍</div>
+      <div>
+        <div class="nav-logo-text"><span>Veritas</span>AI</div>
+      </div>
+    </div>
+    <div class="nav-badge">HACKATHON DEMO</div>
+    <div class="nav-links">
+      <a href="#analyze">Analyze</a>
+      <a href="#how">How It Works</a>
+      <a href="#verdicts">Verdicts</a>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero" id="home">
+    <div class="hero-eyebrow">
+      <span class="dot"></span>
+      AI-Powered Fact Analysis Engine
+    </div>
+    <h1>
+      Stop Misinformation<br/>
+      <span class="gradient-text">Before It Spreads</span>
+    </h1>
+    <p>
+      VeritasAI analyzes any text in real time — extracting claims, evaluating credibility,
+      detecting bias, and generating evidence-based corrections with full reasoning transparency.
+    </p>
+    <div class="hero-stats">
+      <div class="stat-item">
+        <div class="stat-value gradient-text">4</div>
+        <div class="stat-label">Verdict Types</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value gradient-text">0–100%</div>
+        <div class="stat-label">Confidence Score</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value gradient-text">Real-time</div>
+        <div class="stat-label">LLM Analysis</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value gradient-text">Full</div>
+        <div class="stat-label">Reasoning Trace</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MAIN PANEL -->
+  <main class="main-panel" id="analyze">
+    <!-- LEFT COLUMN -->
+    <div>
+      <!-- INPUT CARD -->
+      <div class="glass-card input-card" style="margin-bottom:24px;">
+        <div class="card-header">
+          <div class="card-header-icon purple">📝</div>
+          <div>
+            <div class="card-title">Content Analysis</div>
+            <div class="card-subtitle">Paste any text, article excerpt, or social post</div>
+          </div>
+        </div>
+        <textarea
+          id="inputText"
+          class="input-textarea"
+          placeholder="Paste any text here — news excerpts, social media posts, articles, claims, or statements you'd like to fact-check…"
+          maxlength="4000"
+        ></textarea>
+        <div class="input-footer">
+          <span class="char-count"><span id="charCount">0</span> / 4000 characters</span>
+          <div style="display:flex;gap:10px;align-items:center;">
+            <button class="btn-secondary" onclick="clearInput()" id="clearBtn">✕ Clear</button>
+            <button class="btn-primary" onclick="analyzeContent()" id="analyzeBtn">
+              <span class="btn-icon">🔬</span> Analyze Now
+            </button>
+          </div>
+        </div>
+        <!-- Sample pills -->
+        <div class="sample-section" id="how">
+          <div class="sample-label">Try a sample claim</div>
+          <div class="sample-pills" id="samplePills"></div>
+        </div>
+      </div>
+
+      <!-- LOADING STATE -->
+      <div class="glass-card" style="padding:0;" id="loadingCard">
+        <div class="loading-state" id="loadingState">
+          <div class="loading-orb">
+            <div class="loading-orb-inner">🧠</div>
+            <div class="loading-ring"></div>
+          </div>
+          <div style="font-size:1rem;font-weight:700;margin-bottom:6px;">Analyzing content…</div>
+          <div style="font-size:0.85rem;color:var(--text-muted);margin-bottom:24px;">LLM is evaluating claims in real time</div>
+          <div class="loading-steps" id="loadingSteps"></div>
+        </div>
+      </div>
+
+      <!-- ERROR CARD -->
+      <div class="glass-card error-card" id="errorCard">
+        <div class="error-title">⚠️ Analysis Failed</div>
+        <div class="error-message" id="errorMessage"></div>
+      </div>
+
+      <!-- RESULTS -->
+      <div class="results-section" id="resultsSection">
+        <!-- Overall credibility -->
+        <div class="glass-card overall-score-card" style="margin-bottom:20px;" id="overallCard">
+          <div class="overall-score-inner">
+            <div class="credibility-ring-wrap">
+              <svg class="credibility-ring" width="100" height="100" viewBox="0 0 100 100">
+                <circle class="credibility-ring-bg" cx="50" cy="50" r="45"/>
+                <circle class="credibility-ring-fill" id="ringFill" cx="50" cy="50" r="45"/>
+              </svg>
+              <div class="credibility-ring-text">
+                <div class="credibility-score-num" id="overallScore">-</div>
+                <div class="credibility-score-label">Credibility</div>
+              </div>
+            </div>
+            <div class="overall-info">
+              <div class="overall-title" id="overallTitle">Overall Assessment</div>
+              <div class="overall-summary" id="overallSummary"></div>
+              <div class="actions-bar" style="margin-top:14px;">
+                <button class="btn-secondary" onclick="exportReport()" id="exportBtn">📄 Export Report</button>
+                <button class="btn-secondary" onclick="newAnalysis()">🔄 New Analysis</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Claims header -->
+        <div style="padding: 0 4px; margin-bottom:14px; display:flex;align-items:center;justify-content:space-between;">
+          <div style="font-size:0.78rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-muted);font-weight:600;">Claim Analysis</div>
+          <div id="claimCount" style="font-size:0.82rem;color:var(--text-muted);"></div>
+        </div>
+        <!-- Claims list -->
+        <div class="claims-list" id="claimsList"></div>
+      </div>
+    </div>
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+
+      <!-- How It Works -->
+      <div class="glass-card how-card">
+        <div class="card-header">
+          <div class="card-header-icon blue">⚙️</div>
+          <div>
+            <div class="card-title">How It Works</div>
+          </div>
+        </div>
+        <div class="how-steps">
+          <div class="how-step">
+            <div class="how-step-icon s1">📥</div>
+            <div>
+              <div class="how-step-title">Input</div>
+              <div class="how-step-desc">Paste any text content for analysis</div>
+            </div>
+          </div>
+          <div class="how-step">
+            <div class="how-step-icon s2">🔍</div>
+            <div>
+              <div class="how-step-title">Extract Claims</div>
+              <div class="how-step-desc">LLM identifies discrete factual claims</div>
+            </div>
+          </div>
+          <div class="how-step">
+            <div class="how-step-icon s3">⚖️</div>
+            <div>
+              <div class="how-step-title">Evaluate</div>
+              <div class="how-step-desc">Each claim is analyzed for accuracy, bias, and context</div>
+            </div>
+          </div>
+          <div class="how-step">
+            <div class="how-step-icon s4">✅</div>
+            <div>
+              <div class="how-step-title">Report</div>
+              <div class="how-step-desc">Structured verdicts, corrections, and reasoning traces</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Legend -->
+      <div class="glass-card legend-card" id="verdicts">
+        <div class="card-header">
+          <div class="card-header-icon green">🏷️</div>
+          <div>
+            <div class="card-title">Verdict Guide</div>
+          </div>
+        </div>
+        <div class="legend-items">
+          <div class="legend-item">
+            <div class="legend-dot" style="background:var(--true-color);"></div>
+            <div class="legend-name" style="color:var(--true-color);">Accurate/True</div>
+            <div class="legend-desc">Claim is factually correct and supported by strong evidence</div>
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:var(--miss-color);"></div>
+            <div class="legend-name" style="color:var(--miss-color);">Partially Misleading</div>
+            <div class="legend-desc">Contains partial truth but deceptive, incomplete, or out of context</div>
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:var(--false-color);"></div>
+            <div class="legend-name" style="color:var(--false-color);">False</div>
+            <div class="legend-desc">Claim contradicts well-established facts and evidence</div>
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:var(--unver-color);"></div>
+            <div class="legend-name" style="color:var(--unver-color);">Unverifiable</div>
+            <div class="legend-desc">Insufficient evidence exists to confirm or deny the claim</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- History -->
+      <div class="glass-card history-card">
+        <div class="card-header">
+          <div class="card-header-icon purple">🕘</div>
+          <div>
+            <div class="card-title">Session History</div>
+            <div class="card-subtitle">Recent analyses this session</div>
+          </div>
+        </div>
+        <div class="history-list" id="historyList">
+          <div class="history-empty">No analyses yet. Run your first check above!</div>
+        </div>
+      </div>
+
+      <!-- Disclaimer -->
+      <div class="glass-card disclaimer-card">
+        <div class="disclaimer-title">⚠️ Important Disclaimer</div>
+        <div class="disclaimer-text">
+          VeritasAI uses a large language model and does not access live databases or real-time news.
+          Verdicts are AI-generated estimates — not definitive factual rulings.
+          Always cross-reference with primary sources. Confidence scores reflect model certainty, not ground truth.
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="footer-logo">
+      <span>🔍</span> VeritasAI
+    </div>
+    <div>Built with OpenRouter · meta-llama/llama-3.3-8b-instruct:free · Hackathon 2026</div>
+    <div>Responsible AI · Transparent Reasoning · Open Source</div>
+  </footer>
+
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <span class="toast-icon" id="toastIcon">✅</span>
+  <span id="toastMsg">Done!</span>
+</div>
+
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
