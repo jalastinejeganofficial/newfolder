@@ -228,15 +228,15 @@ const ImageAnalyzer = {
       );
       
       if (foundKeywords.length > 0) {
-        console.log('🔒 Audit keywords detected in IMAGE:', foundKeywords);
+        console.log('🔒 Adult content detected in IMAGE:', foundKeywords);
         
         // Trigger screen lock with same escalating logic
         ScreenLock.incrementOffenseAndLock(foundKeywords);
         
         // Log security event
         if (typeof Logger !== 'undefined') {
-          Logger.analytics('image_audit_detection', {
-            action: 'audit_keywords_in_image',
+          Logger.analytics('image_adult_detection', {
+            action: 'adult_keywords_in_image',
             keywords: foundKeywords,
             timestamp: new Date().toISOString(),
             offenseCount: ScreenLock.offenseCount

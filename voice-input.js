@@ -204,15 +204,15 @@ const VoiceInput = {
       );
       
       if (foundKeywords.length > 0) {
-        console.log('🔒 Audit keywords detected in VOICE:', foundKeywords);
+        console.log('🔒 Adult content detected in VOICE:', foundKeywords);
         
         // Trigger screen lock with same escalating logic
         ScreenLock.incrementOffenseAndLock(foundKeywords);
         
         // Log security event
         if (typeof Logger !== 'undefined') {
-          Logger.analytics('voice_audit_detection', {
-            action: 'audit_keywords_in_voice',
+          Logger.analytics('voice_adult_detection', {
+            action: 'adult_keywords_in_voice',
             keywords: foundKeywords,
             timestamp: new Date().toISOString(),
             offenseCount: ScreenLock.offenseCount

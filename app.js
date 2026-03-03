@@ -308,6 +308,14 @@ window.analyzeContent = async function() {
     return;
   }
   
+  // 🔒 SECURITY CHECK: Check for audit keywords BEFORE analysis
+  try {
+    ScreenLock.checkForAuditKeywords(text);
+    // If lock was triggered, the screen will be locked and user can't proceed
+  } catch (error) {
+    Logger.error('Screen lock check failed:', error);
+  }
+  
   // UI State: Loading
   showLoading();
   hideError();

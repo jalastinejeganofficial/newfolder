@@ -208,14 +208,14 @@ Each verdict includes:
 
 Visit the "Verdicts" page for detailed examples!`;
     }
-    else if (text.includes('security') || text.includes('lock') || text.includes('audit')) {
-      response = `🔒 <strong>Security Features:</strong>
+    else if (text.includes('security') || text.includes('lock') || text.includes('adult') || text.includes('content')) {
+      response = `🔒 <strong>Content Safety Features:</strong>
       
-VeritasAI includes advanced audit detection:
+VeritasAI includes advanced adult content detection:
 
-• <strong>Multi-Vector Monitoring</strong> - Text, images, and voice input all monitored for audit-related keywords
+• <strong>Multi-Vector Monitoring</strong> - Text, images, and voice input all monitored for adult/inappropriate keywords
 
-• <strong>Persistent Lock Screen</strong> - If audit terms detected, screen locks with escalating durations:
+• <strong>Persistent Lock Screen</strong> - If adult content detected, screen locks with escalating durations:
   - 1st offense: 1 minute
   - 2nd offense: 5 minutes
   - 3rd+ offense: 24 hours
@@ -275,7 +275,7 @@ Upload images for comprehensive AI analysis:
 • Infographics
 • Memes with claims
 
-⚠️ Note: Images containing audit-related terms will trigger the security lock system!`;
+⚠️ Note: Images containing adult or inappropriate content will trigger the security lock system!`;
     }
     else if (text.includes('voice') || text.includes('speak') || text.includes('microphone')) {
       response = `🎤 <strong>Voice Input:</strong>
@@ -300,7 +300,7 @@ Hands-free analysis via speech-to-text:
 • Microphone permission required
 • Standard Web Speech API used
 
-⚠️ Speaking audit-related terms will trigger the security lock!`;
+⚠️ Speaking adult or inappropriate content will trigger the security lock!`;
     }
     else if (text.includes('analyze') || text.includes('analysis')) {
       response = `🔍 <strong>Content Analysis:</strong>

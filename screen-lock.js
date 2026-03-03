@@ -1,63 +1,128 @@
 // VeritasAI - Screen Lock Security Feature
-// Locks screen when audit-related keywords are detected
+// Locks screen when adult/inappropriate content is detected
 
 const ScreenLock = {
-  // Comprehensive audit keywords that trigger lock
-  AUDIT_KEYWORDS: [
-    // Audit-related terms
-    'audit',
-    'auditing',
-    'audited',
-    'auditor',
-    'auditors',
-    'audit trail',
-    'audit log',
-    'audit report',
-    'audit committee',
-    'audit firm',
-    'audit process',
-    'audit procedure',
-    'audit evidence',
-    'audit finding',
-    'audit observation',
-    'audit recommendation',
+  // Comprehensive adult content keywords that trigger lock
+  ADULT_KEYWORDS: [
+    // Explicit sexual content
+    'porn',
+    'pornography',
+    'porno',
+    'xxx',
+    'sex',
+    'sexy',
+    'nude',
+    'nudity',
+    'naked',
+    'explicit',
+    'hardcore',
+    'erotica',
+    'erotic',
+    'adult content',
+    'adult material',
     
-    // Compliance and regulatory terms
-    'compliance audit',
-    'regulatory audit',
-    'internal audit',
-    'external audit',
-    'financial audit',
-    'operational audit',
-    'performance audit',
-    'forensic audit',
-    'tax audit',
-    'irs audit',
-    'statutory audit',
-    'independent audit',
-    'management audit',
-    'environmental audit',
-    'social audit',
-    'technical audit',
-    'security audit',
-    'it audit',
-    'information systems audit',
-    'quality audit',
-    'risk audit',
-    'due diligence',
-    'inspection',
-    'investigation',
-    'review process',
-    'accountability',
-    'transparency',
-    'governance',
-    'oversight',
-    'scrutiny',
-    'examination',
-    'assessment',
-    'evaluation',
-    'verification',
-    'validation'
+    // Sexual acts
+    'intercourse',
+    'sexual act',
+    'sexual activity',
+    'oral sex',
+    'anal sex',
+    'blowjob',
+    'handjob',
+    'masturbation',
+    'jerking off',
+    'cumming',
+    'cum shot',
+    'creampie',
+    'facial',
+    'deepthroat',
+    'gang bang',
+    'threesome',
+    'foursome',
+    'group sex',
+    'orgy',
+    
+    // Body parts (explicit)
+    'penis',
+    'vagina',
+    'pussy',
+    'cock',
+    'dick',
+    'ass hole',
+    'asshole',
+    'butthole',
+    'boobs',
+    'breasts',
+    'tits',
+    'nipples',
+    'clit',
+    'clitoris',
+    'labia',
+    'scrotum',
+    'testicles',
+    'balls',
+    'semen',
+    'sperm',
+    'ejaculation',
+    'orgasm',
+    
+    // Vulgar terms
+    'fuck',
+    'fucking',
+    'fucked',
+    'shit',
+    'bullshit',
+    'damn',
+    'bitch',
+    'bastard',
+    'whore',
+    'slut',
+    'prostitute',
+    'hooker',
+    
+    // NSFW categories
+    'nsfw',
+    'not safe for work',
+    'hentai',
+    'milf',
+    'teen porn',
+    'underage sex',
+    'lolita',
+    'pedo',
+    'pedophile',
+    'child porn',
+    'cp',
+    'incest',
+    'rape',
+    'forced sex',
+    'non-consensual',
+    
+    // Fetish content
+    'bdsm',
+    'bondage',
+    'dominatrix',
+    'sadism',
+    'masochism',
+    'fetish',
+    'kink',
+    'gagging',
+    'choking',
+    'asphyxiation',
+    
+    // Other inappropriate content
+    'violence',
+    'gore',
+    'blood',
+    'torture',
+    'murder',
+    'killing',
+    'suicide',
+    'self-harm',
+    'cutting',
+    'anorexia',
+    'bulimia',
+    'pro-ana',
+    'pro-mia'
   ],
   
   // Lock durations
@@ -173,16 +238,16 @@ const ScreenLock = {
     });
   },
   
-  // Check if text contains audit keywords
+  // Check if text contains adult content keywords
   checkForAuditKeywords(text) {
     if (this.isLocked) return;
     
-    const foundKeywords = this.AUDIT_KEYWORDS.filter(keyword => 
+    const foundKeywords = this.ADULT_KEYWORDS.filter(keyword => 
       text.includes(keyword.toLowerCase())
     );
     
     if (foundKeywords.length > 0) {
-      console.log('Audit keywords detected:', foundKeywords);
+      console.log('🔒 Adult content detected:', foundKeywords);
       this.incrementOffenseAndLock(foundKeywords);
     }
   },
@@ -414,10 +479,10 @@ const ScreenLock = {
     overlay.innerHTML = `
       <div class="lock-container">
         <div class="lock-icon">🔒</div>
-        <h2 class="lock-title">Screen Locked - Audit Context Detected</h2>
+        <h2 class="lock-title">Screen Locked - Inappropriate Content Detected</h2>
         
         <div class="lock-message">
-          <p><strong>Audit-related content detected:</strong></p>
+          <p><strong>Adult or inappropriate content detected:</strong></p>
           <div class="detected-keywords">
             ${keywords.map(k => `<span class="keyword-tag">${k}</span>`).join('')}
           </div>
@@ -446,7 +511,7 @@ const ScreenLock = {
           <div class="info-box">
             <div class="info-icon">ℹ️</div>
             <div class="info-text">
-              <p>This screen is temporarily locked due to detection of audit-related content.</p>
+              <p>This screen is temporarily locked due to detection of adult or inappropriate content.</p>
               <p>The screen will automatically unlock after the countdown completes.</p>
               <p style="margin-top: 12px; font-weight: 600; color: #ef4444;">⛔ Developer tools, inspect element, and keyboard shortcuts are disabled during lock.</p>
             </div>
